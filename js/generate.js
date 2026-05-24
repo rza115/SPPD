@@ -310,7 +310,7 @@ function getDocxtemplaterClass() {
   return window.Docxtemplater || window.docxtemplater || null;
 }
 
-async function generateDocx(b64, args) {
+async function generateDocx(b64, args, opts = {}) {
   const DocxClass = getDocxtemplaterClass();
   if (!DocxClass) throw new Error('Library Docxtemplater tidak ditemukan. Pastikan CDN sudah dimuat.');
 
@@ -326,9 +326,41 @@ async function generateDocx(b64, args) {
     nullGetter    : () => '',
   });
   doc.render(args);
-  const out = doc.getZip().generate({ type: 'arraybuffer' });
-  return new Blob([out], {
+  let blob = new Blob([doc.getZip().generate({ type: 'arraybuffer' })], {
     type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+  });
+
+  if (opts.kwitansiJumlahPeserta) {
+    blob = await trimKwitansiHalaman(blob, opts.kwitansiJumlahPeserta);
+  }
+  return blob;
+}
+
+/** Hapus tabel kwitansi kosong — conditional {#ada_peserta_N} tidak bisa membungkus tabel Word. */
+async function trimKwitansiHalaman(blob, jumlahPeserta) {
+  const zip = await JSZip.loadAsync(await blob.arrayBuffer());
+  const xml = await zip.file('word/document.xml').async('string');
+  const doc = new DOMParser().parseFromString(xml, 'application/xml');
+  const NS  = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main';
+  const body = doc.getElementsByTagNameNS(NS, 'body')[0];
+  if (!body) return blob;
+
+  const isCondOnly = (t) => /^\{\{[#/]?ada_peserta_[23]\}\}$/.test(t);
+
+  for (const el of [...body.children]) {
+    if (el.localName !== 'p') continue;
+    const t = (el.textContent || '').trim();
+    if (isCondOnly(t)) body.removeChild(el);
+  }
+
+  const tbls = () => [...body.children].filter(el => el.localName === 'tbl');
+  if (tbls().length >= 3 && jumlahPeserta < 3) body.removeChild(tbls()[2]);
+  if (tbls().length >= 2 && jumlahPeserta < 2) body.removeChild(tbls()[1]);
+
+  zip.file('word/document.xml', new XMLSerializer().serializeToString(doc));
+  return zip.generateAsync({
+    type: 'blob',
+    mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
   });
 }
 
@@ -370,7 +402,9 @@ async function runGenerate(pjdId, selections) {
         const pages  = chunkArray(sorted, KWITANSI_PER_HALAMAN);
         for (let p = 0; p < pages.length; p++) {
           const args = buildKwitansiHalamanArgs(pages[p], pjd, p + 1, pages.length);
-          const blob = await generateDocx(tmplB64, args);
+          const blob = await generateDocx(tmplB64, args, {
+            kwitansiJumlahPeserta: pages[p].length,
+          });
           folder.file(`Kwitansi_Halaman${p + 1}.docx`, blob);
           count++;
         }

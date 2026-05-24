@@ -29,15 +29,34 @@ function toast(msg, type = 'default', duration = 3000) {
 }
 
 // ─── EXTRACT PLACEHOLDERS dari DOCX ───────────────────────
+const PLACEHOLDER_RE = /\{\{\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*\}\}/g;
+
+function placeholdersFromXml(xmlText) {
+  // Jangan sisipkan spasi antar <w:t> — Word sering memecah {{tag}} jadi beberapa run
+  const plain = xmlText.replace(/<[^>]+>/g, '');
+  const found = new Set();
+  let m;
+  PLACEHOLDER_RE.lastIndex = 0;
+  while ((m = PLACEHOLDER_RE.exec(plain)) !== null) {
+    found.add(m[1]);
+  }
+  return found;
+}
+
 async function extractPlaceholders(file) {
   try {
     const zip = await JSZip.loadAsync(file);
-    const xmlFile = zip.file('word/document.xml');
-    if (!xmlFile) throw new Error('Bukan file DOCX yang valid');
-    const xmlText = await xmlFile.async('string');
-    const plain = xmlText.replace(/<[^>]+>/g, ' ');
-    const matches = [...plain.matchAll(/\{\{([a-zA-Z_][a-zA-Z0-9_]*)\}\}/g)];
-    return [...new Set(matches.map(m => m[1]))];
+    const xmlParts = Object.keys(zip.files).filter(
+      (name) => /^word\/(document|header\d*|footer\d*)\.xml$/.test(name)
+    );
+    if (!xmlParts.length) throw new Error('Bukan file DOCX yang valid');
+
+    const found = new Set();
+    for (const name of xmlParts) {
+      const xmlText = await zip.file(name).async('string');
+      placeholdersFromXml(xmlText).forEach((p) => found.add(p));
+    }
+    return [...found].sort();
   } catch (e) {
     console.error('Extract error:', e);
     throw e;
@@ -56,7 +75,17 @@ async function handleTemplateUpload(file) {
     const placeholders = await extractPlaceholders(file);
     showUploadForm(file.name, placeholders, file);
     if (statusEl) {
-      statusEl.innerHTML = `<div class="alert alert-success">✅ Berhasil membaca file. Ditemukan <strong>${placeholders.length} placeholder</strong>.</div>`;
+      if (placeholders.length === 0) {
+        statusEl.innerHTML = `
+          <div class="alert alert-warning">
+            ⚠️ Tidak ada placeholder <code>{{nama_argument}}</code> terdeteksi.
+            Pastikan template memakai format <strong>{{nomor}}</strong>, <strong>{{nama_penerima_1}}</strong>, dll.
+            (bukan tag conditional <code>{{#ada_peserta_2}}</code> saja).
+            Untuk kwitansi 1–3 peserta, gunakan file <strong>templates/kwitansi.docx</strong> dari proyek ini.
+          </div>`;
+      } else {
+        statusEl.innerHTML = `<div class="alert alert-success">✅ Berhasil membaca file. Ditemukan <strong>${placeholders.length} placeholder</strong>.</div>`;
+      }
     }
   } catch (err) {
     if (statusEl) statusEl.innerHTML = `<div class="alert alert-warning">⚠️ ${err.message}</div>`;

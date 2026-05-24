@@ -168,14 +168,13 @@ PAGES.panduan = `
   ['nominal_peserta_1','📄 Halaman','halaman','Total slot 1 format angka','310,000'],
   ['untuk_pembayaran_1','📄 Halaman','halaman','Teks "Untuk Pembayaran" slot 1','Biaya Uang Harian...'],
   ['rekening_penerima_1','📄 Halaman','halaman','Rekening bank slot 1','0483210024282'],
-  ['ada_peserta_2','📄 Halaman','halaman','Boolean — true jika slot 2 terisi (untuk {#ada_peserta_2}...{/ada_peserta_2})','true / false'],
+  ['jumlah_kwitansi_halaman','📄 Halaman','halaman','Jumlah peserta di halaman ini (1–3) — sistem otomatis hapus blok kosong','2'],
   ['nama_penerima_2','📄 Halaman','halaman','Nama penerima kwitansi slot 2','—'],
   ['nama_penerima_3','📄 Halaman','halaman','Nama penerima kwitansi slot 3','—'],
   ['halaman_ke','📄 Halaman','halaman','Nomor halaman kwitansi (1, 2, 3...)','1'],
   ['total_halaman','📄 Halaman','halaman','Total halaman kwitansi yang digenerate','2'],
-  ['jumlah_kwitansi_halaman','📄 Halaman','halaman','Jumlah kwitansi di halaman ini (1–3)','3'],
 ],
-'<div class="alert alert-info">💡 Slot _2 dan _3 kosong jika peserta kurang dari 3. Bungkus blok kwitansi slot 2/3 dengan <strong>{#ada_peserta_2}...{/ada_peserta_2}</strong> agar tidak tampil saat kosong.</div>'
+'<div class="alert alert-info">💡 Tidak perlu tag <strong>{{#ada_peserta_2}}</strong> di template. Sistem otomatis menghapus blok kwitansi 2 dan 3 jika peserta kurang dari 3.</div>'
 ) + argSection('🔁','#EDE7F6','Loop Peserta — Kwitansi (1 file/orang)','Argument ini tersedia pada template kwitansi dengan layout <strong>1 lembar = 1 peserta</strong>. Template di-render N kali sesuai jumlah peserta.',
 [
   ['nama_penerima','🔁 Loop','loop','Nama lengkap peserta (iterasi saat ini)','Romadhoni S Subekti, S.St. Par., M.M. Par.'],
