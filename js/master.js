@@ -187,7 +187,7 @@ function deleteUK(id) {
 // ══════════════════════════════════════════════════════════
 // PEGAWAI
 // ══════════════════════════════════════════════════════════
-const GOLONGAN_OPTIONS = ['X','VII','IV-e','IV-d','IV-c','IV-b','IV-a','III-d','III-c','III-b','III-a','II-d','II-c','II-b','II-a','I-d','I-c','I-b','I-a'];
+const GOLONGAN_OPTIONS = ['XI','X','IX','VIII','VII','VI','V','IV-e','IV-d','IV-c','IV-b','IV-a','III-d','III-c','III-b','III-a','II-d','II-c','II-b','II-a','I-d','I-c','I-b','I-a'];
 
 function renderPegawai(filter = '') {
   let list = DB.getArr(KEYS.pegawai);
