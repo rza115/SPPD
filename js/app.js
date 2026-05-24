@@ -85,6 +85,7 @@ function showUploadForm(fileName, placeholders, pendingFile) {
   formEl._pendingFile = pendingFile instanceof File ? pendingFile : null;
   delete formEl.dataset.fileData;
   formEl.dataset.fileName = fileName;
+  onTemplateJenisChange();
 }
 
 function addManualPlaceholder() {
@@ -104,13 +105,32 @@ function addManualPlaceholder() {
   input.focus();
 }
 
+function getKwitansiLayoutFromForm() {
+  const jenis = document.getElementById('tf-jenis')?.value;
+  if (jenis !== 'kwitansi') {
+    return document.getElementById('tf-iterable')?.checked ? 'per_peserta' : null;
+  }
+  return document.getElementById('tf-kwitansi-layout')?.value || 'per_halaman';
+}
+
+function onTemplateJenisChange() {
+  const jenis = document.getElementById('tf-jenis')?.value;
+  const kwitansiWrap = document.getElementById('tf-kwitansi-layout-wrap');
+  const iterableWrap = document.getElementById('tf-iterable-wrap');
+  if (kwitansiWrap) kwitansiWrap.style.display = jenis === 'kwitansi' ? '' : 'none';
+  if (iterableWrap) iterableWrap.style.display = jenis === 'kwitansi' ? 'none' : '';
+}
+
 async function saveTemplateForm() {
   const formEl = document.getElementById('upload-form');
   const nama = document.getElementById('tf-nama')?.value.trim();
   const jenis = document.getElementById('tf-jenis')?.value;
   const scope = document.getElementById('tf-scope')?.value;
   const deskripsi = document.getElementById('tf-deskripsi')?.value.trim();
-  const isIterable = document.getElementById('tf-iterable')?.checked;
+  const kwitansiLayout = jenis === 'kwitansi' ? getKwitansiLayoutFromForm() : null;
+  const isIterable = jenis === 'kwitansi'
+    ? kwitansiLayout === 'per_peserta'
+    : !!document.getElementById('tf-iterable')?.checked;
   if (!nama) return toast('Nama template wajib diisi', 'error');
   const pendingFile = formEl?._pendingFile;
   if (!pendingFile) return toast('File belum diupload', 'error');
@@ -142,6 +162,7 @@ async function saveTemplateForm() {
         scope,
         deskripsi: deskripsi || '',
         isIterable: !!isIterable,
+        kwitansiLayout: kwitansiLayout || undefined,
         placeholders,
         fileName,
         storagePath,
@@ -157,6 +178,7 @@ async function saveTemplateForm() {
         scope,
         deskripsi: deskripsi || '',
         isIterable: !!isIterable,
+        kwitansiLayout: kwitansiLayout || undefined,
         placeholders,
         fileName,
         fileData,
@@ -181,6 +203,9 @@ async function saveTemplateForm() {
     if (phEl) phEl.innerHTML = '';
     const iterEl = document.getElementById('tf-iterable');
     if (iterEl) iterEl.checked = false;
+    const layoutEl = document.getElementById('tf-kwitansi-layout');
+    if (layoutEl) layoutEl.value = 'per_halaman';
+    onTemplateJenisChange();
 
     renderTemplateList();
     updateTemplateBadge();
@@ -234,7 +259,11 @@ function renderTemplateList() {
     const scopeBadge = t.scope === 'global'
       ? '<span class="badge badge-computed">🌐 Global</span>'
       : '<span class="badge badge-manual">👤 Personal</span>';
-    const loopBadge = t.isIterable ? '<span class="badge badge-loop">🔁 Loop</span>' : '';
+    const kLayout = t.kwitansiLayout || (t.isIterable ? 'per_peserta' : 'per_halaman');
+    const loopBadge = t.isIterable
+      ? '<span class="badge badge-loop">🔁 Loop</span>'
+      : (t.jenis === 'kwitansi' && kLayout === 'per_halaman'
+        ? '<span class="badge badge-loop">📄 1–3/hal</span>' : '');
     const storageBadge = t.storagePath
       ? '<span class="badge badge-computed" title="File di Supabase Storage">📦 Storage</span>'
       : (t.fileData ? '<span class="badge badge-manual" title="File di browser">💾 Lokal</span>' : '');

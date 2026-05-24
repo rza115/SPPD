@@ -159,7 +159,24 @@ PAGES.panduan = `
   ['tujuan_perjalanan','⚡ Computed','computed','Deskripsi tujuan lengkap untuk rekap<br><span class="text-muted text-sm">Gabungan: deskripsi_tugas + hari_tanggal + alamat tujuan</span>','Koordinasi Terkait... pada hari Selasa, 30 Desember 2025, di Jl. Medan Merdeka Barat...'],
   ['tanggal_rekap','🔄 Auto','auto','Tanggal rekap belanja (sama dengan tanggal_berangkat)','30 Desember 2025'],
   ['kota_tanggal_rekap','⚡ Computed','computed','Baris kota dan tanggal di TTD rekap belanja','Cibinong, 30 Desember 2025'],
-]) + argSection('🔁','#EDE7F6','Loop Peserta — Kwitansi','Argument ini tersedia dalam konteks loop per peserta. Template kwitansi di-render N kali sesuai jumlah peserta.',
+]) + argSection('📄','#E8F5E9','Kwitansi Per Halaman (1–3 peserta)','Argument untuk template kwitansi dengan layout 1 lembar = 1–3 peserta. Gunakan suffix _1, _2, _3 untuk masing-masing kwitansi di halaman yang sama.',
+[
+  ['nama_penerima_1','📄 Halaman','halaman','Nama penerima kwitansi slot 1','Romadhoni S Subekti...'],
+  ['nip_penerima_1','📄 Halaman','halaman','NIP penerima slot 1','197808172005011016'],
+  ['total_peserta_1','📄 Halaman','halaman','Total slot 1 (format Rp)','Rp 310.000'],
+  ['total_peserta_terbilang_1','📄 Halaman','halaman','Total slot 1 terbilang','Tiga Ratus Sepuluh Ribu Rupiah'],
+  ['nominal_peserta_1','📄 Halaman','halaman','Total slot 1 format angka','310,000'],
+  ['untuk_pembayaran_1','📄 Halaman','halaman','Teks "Untuk Pembayaran" slot 1','Biaya Uang Harian...'],
+  ['rekening_penerima_1','📄 Halaman','halaman','Rekening bank slot 1','0483210024282'],
+  ['ada_peserta_2','📄 Halaman','halaman','Boolean — true jika slot 2 terisi (untuk {#ada_peserta_2}...{/ada_peserta_2})','true / false'],
+  ['nama_penerima_2','📄 Halaman','halaman','Nama penerima kwitansi slot 2','—'],
+  ['nama_penerima_3','📄 Halaman','halaman','Nama penerima kwitansi slot 3','—'],
+  ['halaman_ke','📄 Halaman','halaman','Nomor halaman kwitansi (1, 2, 3...)','1'],
+  ['total_halaman','📄 Halaman','halaman','Total halaman kwitansi yang digenerate','2'],
+  ['jumlah_kwitansi_halaman','📄 Halaman','halaman','Jumlah kwitansi di halaman ini (1–3)','3'],
+],
+'<div class="alert alert-info">💡 Slot _2 dan _3 kosong jika peserta kurang dari 3. Bungkus blok kwitansi slot 2/3 dengan <strong>{#ada_peserta_2}...{/ada_peserta_2}</strong> agar tidak tampil saat kosong.</div>'
+) + argSection('🔁','#EDE7F6','Loop Peserta — Kwitansi (1 file/orang)','Argument ini tersedia pada template kwitansi dengan layout <strong>1 lembar = 1 peserta</strong>. Template di-render N kali sesuai jumlah peserta.',
 [
   ['nama_penerima','🔁 Loop','loop','Nama lengkap peserta (iterasi saat ini)','Romadhoni S Subekti, S.St. Par., M.M. Par.'],
   ['nip_penerima','🔁 Loop','loop','NIP peserta (iterasi saat ini)','197808172005011016'],
@@ -172,7 +189,7 @@ PAGES.panduan = `
   ['nominal_peserta','🔁 Loop','loop','Total peserta format angka untuk kwitansi','310,000'],
   ['urutan_peserta','🔁 Loop','loop','Nomor urut peserta dalam daftar (1, 2, 3...)','1'],
 ],
-'<div class="alert alert-warning">⚠️ Argument loop hanya berlaku pada template dengan opsi <strong>"Loop per Peserta"</strong> diaktifkan. Peserta diurutkan berdasarkan golongan tertinggi ke terendah.</div>'
+'<div class="alert alert-warning">⚠️ Argument loop hanya berlaku pada template kwitansi dengan layout <strong>1 lembar = 1 peserta</strong>. Peserta diurutkan berdasarkan golongan tertinggi ke terendah.</div>'
 ) + argSection('📋','#E8F8F5','Tabel Peserta — SPPD & Surat Tugas','Argument untuk menyisipkan daftar peserta di dokumen non-loop',[
   ['peserta_table','⚡ Computed','computed','Tabel pengikut SPPD (nama | pangkat/gol | jabatan) — dirender otomatis, diurutkan golongan tertinggi','Tabel otomatis'],
   ['jumlah_peserta','⚡ Computed','computed','Jumlah total peserta perjalanan dinas','2'],
@@ -185,7 +202,7 @@ PAGES.panduan = `
     <h3 style="margin-bottom:14px;font-size:14px">📌 Catatan Penting Penggunaan Template</h3>
     <div style="display:flex;flex-direction:column;gap:10px;font-size:13px;color:var(--text-2)">
       <div>1. Semua placeholder ditulis <strong>{{nama_argument}}</strong> — huruf kecil, underscore sebagai spasi, tanpa spasi di dalam kurung kurawal.</div>
-      <div>2. Template kwitansi harus mengaktifkan opsi <strong>"Loop per Peserta"</strong> saat upload agar di-render N kali sesuai jumlah peserta.</div>
+      <div>2. Template kwitansi default: <strong>1 lembar = 1–3 peserta</strong> — gunakan <code style="background:#f0f3f9;padding:1px 5px;border-radius:3px">{{nama_penerima_1}}</code>, <code style="background:#f0f3f9;padding:1px 5px;border-radius:3px">{{nama_penerima_2}}</code>, <code style="background:#f0f3f9;padding:1px 5px;border-radius:3px">{{nama_penerima_3}}</code>. Untuk 1 file per orang, pilih layout <strong>1 lembar = 1 peserta</strong> saat upload.</div>
       <div>3. SPPD otomatis di-generate <strong>2 lembar</strong> — cukup satu template, sistem loop 2x dengan <code style="background:#f0f3f9;padding:1px 5px;border-radius:3px">{{lembar_ke}}</code> berbeda.</div>
       <div>4. <code style="background:#f0f3f9;padding:1px 5px;border-radius:3px">{{nomor}}</code> dan <code style="background:#f0f3f9;padding:1px 5px;border-radius:3px">{{nomor_sppd}}</code> mengambil nilai yang sama — nomor surat yang diinput saat membuat perjalanan dinas.</div>
       <div>5. <code style="background:#f0f3f9;padding:1px 5px;border-radius:3px">{{kode_rekening_sipd}}</code> merujuk kode anggaran di SIPD, <strong>bukan</strong> nomor rekening bank. Untuk rekening bank pegawai gunakan <code style="background:#f0f3f9;padding:1px 5px;border-radius:3px">{{nomor_rekening}}</code>.</div>
@@ -224,7 +241,7 @@ PAGES.template = `
         </div>
         <div class="form-group">
           <label class="form-label">Jenis Dokumen</label>
-          <select class="form-control" id="tf-jenis">
+          <select class="form-control" id="tf-jenis" onchange="onTemplateJenisChange()">
             <option value="kwitansi">🧾 Kwitansi</option>
             <option value="sppd">📋 SPPD</option>
             <option value="surat_tugas">📝 Surat Tugas</option>
@@ -240,7 +257,14 @@ PAGES.template = `
               <option value="personal">👤 Personal (saya saja)</option>
             </select>
           </div>
-          <div class="form-group">
+          <div class="form-group" id="tf-kwitansi-layout-wrap">
+            <label class="form-label">Layout Kwitansi</label>
+            <select class="form-control" id="tf-kwitansi-layout">
+              <option value="per_halaman">📄 1 lembar = 1–3 peserta (default)</option>
+              <option value="per_peserta">🔁 1 lembar = 1 peserta (1 file/orang)</option>
+            </select>
+          </div>
+          <div class="form-group" id="tf-iterable-wrap">
             <label class="form-label">Loop per Peserta?</label>
             <div style="display:flex;align-items:center;gap:10px;margin-top:10px">
               <input type="checkbox" id="tf-iterable" style="width:16px;height:16px;cursor:pointer">

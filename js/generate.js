@@ -153,16 +153,116 @@ function buildBaseArgs(pjd) {
   };
 }
 
+const KWITANSI_PER_HALAMAN = 3;
+
+function getKwitansiLayout(tmpl) {
+  if (tmpl.kwitansiLayout === 'per_halaman' || tmpl.kwitansiLayout === 'per_peserta') {
+    return tmpl.kwitansiLayout;
+  }
+  return tmpl.isIterable ? 'per_peserta' : 'per_halaman';
+}
+
+function chunkArray(arr, size) {
+  const out = [];
+  for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
+  return out;
+}
+
+function buildUntukPembayaran(ps, pjd) {
+  const tingkat = getTingkatBiaya(pjd.jenis_perjalanan);
+  const tujuan  = buildTujuanText(pjd);
+  return ps.dapat_transport
+    ? `Biaya Uang Harian dan Transport Perjalanan Dinas ${tingkat} ke ${tujuan}`
+    : `Biaya Uang Harian Perjalanan Dinas ${tingkat} ke ${tujuan}`;
+}
+
+function emptyKwitansiSlotFields(slot) {
+  const keys = [
+    'nama', 'nama_penerima', 'nip', 'nip_penerima', 'jabatan', 'jabatan_penerima',
+    'pangkat_golongan', 'nomor_rekening', 'rekening_penerima', 'rekening',
+    'uang_harian', 'uang_harian_peserta', 'transport', 'transport_peserta', 'transport_total',
+    'total', 'total_peserta', 'total_terbilang', 'total_peserta_terbilang', 'banyaknya_uang',
+    'nominal', 'nominal_peserta', 'untuk_pembayaran', 'urutan_peserta',
+  ];
+  const out = {};
+  keys.forEach(k => { out[`${k}_${slot}`] = ''; });
+  out[`ada_peserta_${slot}`] = false;
+  return out;
+}
+
+function buildKwitansiSlotFields(ps, pjd, urutanGlobal, slot) {
+  if (!ps) return emptyKwitansiSlotFields(slot);
+
+  const pgw = getPegawaiById(ps.pegawai_id);
+  const cp  = calcPesertaFull(ps, pjd);
+  const pg  = pgw?.pangkat_golongan || [pgw?.pangkat, pgw?.golongan].filter(Boolean).join(' / ') || '';
+
+  return {
+    [`nama_${slot}`]                  : pgw?.nama_lengkap || '',
+    [`nama_penerima_${slot}`]         : pgw?.nama_lengkap || '',
+    [`nip_${slot}`]                   : pgw?.nip || '',
+    [`nip_penerima_${slot}`]          : pgw?.nip || '',
+    [`jabatan_${slot}`]               : pgw?.jabatan || '',
+    [`jabatan_penerima_${slot}`]      : pgw?.jabatan || '',
+    [`pangkat_golongan_${slot}`]      : pg,
+    [`nomor_rekening_${slot}`]        : pgw?.nomor_rekening || '',
+    [`rekening_penerima_${slot}`]     : pgw?.nomor_rekening || '',
+    [`rekening_${slot}`]              : pgw?.nomor_rekening || '',
+    [`uang_harian_${slot}`]           : formatRupiah(cp.harian),
+    [`uang_harian_peserta_${slot}`]   : formatRupiah(cp.harian),
+    [`transport_${slot}`]             : formatRupiah(cp.totalT),
+    [`transport_peserta_${slot}`]     : formatRupiah(cp.totalT),
+    [`transport_total_${slot}`]       : formatRupiah(cp.totalT),
+    [`total_${slot}`]                 : formatRupiah(cp.total),
+    [`total_peserta_${slot}`]         : formatRupiah(cp.total),
+    [`total_terbilang_${slot}`]       : terbilang(cp.total),
+    [`total_peserta_terbilang_${slot}`]: terbilang(cp.total),
+    [`banyaknya_uang_${slot}`]        : terbilang(cp.total),
+    [`nominal_${slot}`]               : formatNominalDoc(cp.total),
+    [`nominal_peserta_${slot}`]       : formatNominalDoc(cp.total),
+    [`untuk_pembayaran_${slot}`]      : buildUntukPembayaran(ps, pjd),
+    [`urutan_peserta_${slot}`]        : urutanGlobal,
+    [`ada_peserta_${slot}`]           : true,
+  };
+}
+
+function buildKwitansiHalamanArgs(chunk, pjd, halamanKe, totalHalaman) {
+  const base = buildBaseArgs(pjd);
+  const sorted = sortedPeserta(pjd);
+  const globalOffset = (halamanKe - 1) * KWITANSI_PER_HALAMAN;
+
+  let slotArgs = {};
+  for (let s = 0; s < KWITANSI_PER_HALAMAN; s++) {
+    const ps = chunk[s] || null;
+    const urutan = ps ? sorted.indexOf(ps) + 1 : 0;
+    Object.assign(slotArgs, buildKwitansiSlotFields(ps, pjd, urutan, s + 1));
+  }
+
+  return {
+    ...base,
+    ...slotArgs,
+    halaman_ke              : halamanKe,
+    total_halaman           : totalHalaman,
+    jumlah_kwitansi_halaman : chunk.length,
+    jumlah_peserta_halaman  : chunk.length,
+  };
+}
+
+function countKwitansiFiles(pjd, tmpl) {
+  const n = pjd?.peserta?.length || 0;
+  if (n === 0) return 0;
+  if (getKwitansiLayout(tmpl) === 'per_halaman') {
+    return Math.ceil(n / KWITANSI_PER_HALAMAN);
+  }
+  return n;
+}
+
 function buildPesertaArgs(ps, pjd, urutan) {
   const pgw  = getPegawaiById(ps.pegawai_id);
   const uk   = getUKForPegawai(pgw);
   const cp   = calcPesertaFull(ps, pjd);
-  const tujuan  = buildTujuanText(pjd);
-  const tingkat = getTingkatBiaya(pjd.jenis_perjalanan);
 
-  const untukPembayaran = ps.dapat_transport
-    ? `Biaya Uang Harian dan Transport Perjalanan Dinas ${tingkat} ke ${tujuan}`
-    : `Biaya Uang Harian Perjalanan Dinas ${tingkat} ke ${tujuan}`;
+  const untukPembayaran = buildUntukPembayaran(ps, pjd);
 
   return {
     ...buildBaseArgs(pjd),
@@ -265,7 +365,16 @@ async function runGenerate(pjdId, selections) {
     try {
       updateGenerateProgress(`Generating ${sel.label}...`);
 
-      if (tmpl.isIterable) {
+      if (tmpl.jenis === 'kwitansi' && getKwitansiLayout(tmpl) === 'per_halaman') {
+        const sorted = sortedPeserta(pjd);
+        const pages  = chunkArray(sorted, KWITANSI_PER_HALAMAN);
+        for (let p = 0; p < pages.length; p++) {
+          const args = buildKwitansiHalamanArgs(pages[p], pjd, p + 1, pages.length);
+          const blob = await generateDocx(tmplB64, args);
+          folder.file(`Kwitansi_Halaman${p + 1}.docx`, blob);
+          count++;
+        }
+      } else if (tmpl.isIterable) {
         const sorted = sortedPeserta(pjd);
         for (let i = 0; i < sorted.length; i++) {
           const pgw  = getPegawaiById(sorted[i].pegawai_id);
@@ -436,7 +545,7 @@ function renderGeneratePage() {
 function renderTemplateSelector() {
   const JENIS = [
     { key: 'sppd',          label: 'SPPD',           icon: '📋', note: 'Generate 2 lembar otomatis (Lembar 1 & 2)' },
-    { key: 'kwitansi',      label: 'Kwitansi',       icon: '🧾', note: 'Loop per peserta — 1 file per orang' },
+    { key: 'kwitansi',      label: 'Kwitansi',       icon: '🧾', note: '1 lembar = 1–3 peserta (atau 1 file/orang jika template loop)' },
     { key: 'surat_tugas',   label: 'Surat Tugas',    icon: '📝', note: 'Generate 1 file' },
     { key: 'rekap_belanja', label: 'Rekap Belanja',  icon: '📊', note: 'Generate 1 file' },
     { key: 'custom',        label: 'Custom',         icon: '📁', note: 'Template custom' },
@@ -487,7 +596,8 @@ function updateGenSummary() {
       if (s.jenis === 'kwitansi') {
         const pjdId = document.getElementById('gen-pjd-select')?.value;
         const pjd   = getPJDList().find(x => x.id === pjdId);
-        const n     = pjd?.peserta?.length || 0;
+        const tmpl  = AppState.templates.find(t => t.id === s.templateId);
+        const n     = countKwitansiFiles(pjd, tmpl || {});
         return `Kwitansi (${n} file)`;
       }
       if (s.jenis === 'sppd') return 'SPPD (2 lembar)';
@@ -497,7 +607,8 @@ function updateGenSummary() {
       if (s.jenis === 'kwitansi') {
         const pjdId = document.getElementById('gen-pjd-select')?.value;
         const pjd   = getPJDList().find(x => x.id === pjdId);
-        return sum + (pjd?.peserta?.length || 0);
+        const tmpl  = AppState.templates.find(t => t.id === s.templateId);
+        return sum + countKwitansiFiles(pjd, tmpl || {});
       }
       if (s.jenis === 'sppd') return sum + 2;
       return sum + 1;
