@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Masuk — SPPD Generator</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/login.css">
+</head>
+<body class="login-page">
+  <div class="login-layout">
+    <aside class="login-brand">
+      <div class="login-brand-inner">
+        <div class="logo-icon">🏛️</div>
+        <h1>SPPD Generator</h1>
+        <p>Sistem generate otomatis dokumen perjalanan dinas untuk Dinas Kebudayaan Kabupaten Bogor.</p>
+        <ul class="login-brand-features">
+          <li><span>📄</span> Template .docx dengan placeholder kustom</li>
+          <li><span>✈️</span> Kalkulasi perjalanan dinas otomatis</li>
+          <li><span>⚡</span> Generate ZIP semua dokumen sekaligus</li>
+        </ul>
+      </div>
+    </aside>
+
+    <main class="login-panel">
+      <div class="login-card">
+        <div class="login-card-header">
+          <h2 id="login-heading">Selamat datang</h2>
+          <p id="login-subheading">Masuk ke akun Anda untuk melanjutkan</p>
+        </div>
+
+        <div id="config-warning" class="login-config-warning" style="display:none">
+          <strong>⚠️ Supabase belum dikonfigurasi</strong>
+          Isi <code>SUPABASE_URL</code> dan <code>SUPABASE_ANON_KEY</code> di Vercel (atau salin <code>js/config.example.js</code> ke <code>js/config.js</code> untuk pengembangan lokal).
+        </div>
+
+        <div class="login-tabs" role="tablist">
+          <button type="button" class="login-tab active" data-tab="signin" role="tab">Masuk</button>
+          <button type="button" class="login-tab" data-tab="signup" role="tab">Daftar</button>
+        </div>
+
+        <!-- Masuk -->
+        <div id="pane-signin" class="login-form-pane active" role="tabpanel">
+          <form id="form-signin" novalidate>
+            <div class="form-group">
+              <label class="form-label" for="signin-email">Email</label>
+              <input class="form-control" type="email" id="signin-email" name="email"
+                     placeholder="nama@dinkab.go.id" autocomplete="email" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="signin-password">Kata sandi</label>
+              <div class="password-toggle">
+                <input class="form-control" type="password" id="signin-password" name="password"
+                       placeholder="••••••••" autocomplete="current-password" required minlength="6">
+                <button type="button" class="password-toggle-btn" data-target="signin-password" aria-label="Tampilkan sandi">👁</button>
+              </div>
+            </div>
+            <button type="submit" class="btn btn-primary btn-lg login-submit" id="btn-signin">
+              Masuk
+            </button>
+          </form>
+          <div class="login-footer">
+            <a href="#" id="link-forgot">Lupa kata sandi?</a>
+          </div>
+        </div>
+
+        <!-- Daftar -->
+        <div id="pane-signup" class="login-form-pane" role="tabpanel">
+          <form id="form-signup" novalidate>
+            <div class="form-group">
+              <label class="form-label" for="signup-name">Nama lengkap</label>
+              <input class="form-control" type="text" id="signup-name" name="full_name"
+                     placeholder="Nama Anda" autocomplete="name" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="signup-email">Email</label>
+              <input class="form-control" type="email" id="signup-email" name="email"
+                     placeholder="nama@dinkab.go.id" autocomplete="email" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="signup-password">Kata sandi</label>
+              <div class="password-toggle">
+                <input class="form-control" type="password" id="signup-password" name="password"
+                       placeholder="Minimal 6 karakter" autocomplete="new-password" required minlength="6">
+                <button type="button" class="password-toggle-btn" data-target="signup-password" aria-label="Tampilkan sandi">👁</button>
+              </div>
+            </div>
+            <button type="submit" class="btn btn-primary btn-lg login-submit" id="btn-signup">
+              Buat akun
+            </button>
+          </form>
+          <p class="login-footer" style="margin-top:16px">
+            Setelah mendaftar, periksa email untuk konfirmasi akun (jika diaktifkan di Supabase).
+          </p>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div class="toast-container" id="toast-container"></div>
+
+  <script src="js/config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    // Tab switching
+    document.querySelectorAll('.login-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        const id = tab.dataset.tab;
+        document.querySelectorAll('.login-tab').forEach(t => t.classList.toggle('active', t === tab));
+        document.querySelectorAll('.login-form-pane').forEach(p => {
+          p.classList.toggle('active', p.id === 'pane-' + id);
+        });
+        const headings = {
+          signin: ['Selamat datang', 'Masuk ke akun Anda untuk melanjutkan'],
+          signup: ['Buat akun baru', 'Daftar untuk menggunakan SPPD Generator'],
+        };
+        const [h, s] = headings[id] || headings.signin;
+        document.getElementById('login-heading').textContent = h;
+        document.getElementById('login-subheading').textContent = s;
+      });
+    });
+
+    // Toggle password visibility
+    document.querySelectorAll('.password-toggle-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const input = document.getElementById(btn.dataset.target);
+        if (!input) return;
+        const show = input.type === 'password';
+        input.type = show ? 'text' : 'password';
+        btn.textContent = show ? '🙈' : '👁';
+      });
+    });
+
+    // Forgot password
+    document.getElementById('link-forgot').addEventListener('click', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('signin-email').value.trim()
+        || prompt('Masukkan email Anda untuk reset kata sandi:');
+      if (!email) return;
+      try {
+        await Auth.resetPassword(email);
+        toast('Email reset kata sandi telah dikirim. Periksa kotak masuk Anda.', 'success', 5000);
+      } catch (err) {
+        toast(err.message || 'Gagal mengirim email reset', 'error');
+      }
+    });
+
+    document.getElementById('form-signin').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('btn-signin');
+      const email = document.getElementById('signin-email').value.trim();
+      const password = document.getElementById('signin-password').value;
+      btn.disabled = true;
+      btn.textContent = 'Memproses...';
+      try {
+        await Auth.signIn(email, password);
+        window.location.href = 'index.html';
+      } catch (err) {
+        toast(err.message || 'Gagal masuk', 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Masuk';
+      }
+    });
+
+    document.getElementById('form-signup').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('btn-signup');
+      const fullName = document.getElementById('signup-name').value.trim();
+      const email = document.getElementById('signup-email').value.trim();
+      const password = document.getElementById('signup-password').value;
+      btn.disabled = true;
+      btn.textContent = 'Memproses...';
+      try {
+        const result = await Auth.signUp(email, password, fullName);
+        if (result.needsConfirmation) {
+          toast('Akun dibuat! Periksa email untuk konfirmasi sebelum masuk.', 'success', 6000);
+          document.querySelector('.login-tab[data-tab="signin"]').click();
+        } else {
+          toast('Akun berhasil dibuat. Silakan masuk.', 'success');
+          document.querySelector('.login-tab[data-tab="signin"]').click();
+        }
+      } catch (err) {
+        toast(err.message || 'Gagal mendaftar', 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Buat akun';
+      }
+    });
+
+    // Redirect jika sudah login
+    document.addEventListener('DOMContentLoaded', async () => {
+      if (!Auth.isConfigured()) {
+        document.getElementById('config-warning').style.display = 'block';
+      }
+      const session = await Auth.getSession();
+      if (session) window.location.href = 'index.html';
+    });
+  </script>
+</body>
+</html>

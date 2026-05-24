@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SPPD App</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="app-loading" class="app-loading">
+  <div class="app-loading-box">
+    <div class="app-loading-spinner"></div>
+    <p class="app-loading-text">Memuat data...</p>
+  </div>
+</div>
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">🏛️</div>
+    <div class="logo-text">
+      <strong>SPPD Generator</strong>
+      <span>Dinas Kebudayaan Kab. Bogor</span>
+    </div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section-label">Menu Utama</div>
+    <button class="nav-item active" data-page="dashboard"><span class="nav-icon">🏠</span> Dashboard</button>
+    <button class="nav-item" data-page="perjalanan"><span class="nav-icon">✈️</span> Perjalanan Dinas</button>
+    <div class="nav-section-label">Dokumen</div>
+    <button class="nav-item" data-page="template"><span class="nav-icon">📄</span> Kelola Template</button>
+    <button class="nav-item" data-page="generate"><span class="nav-icon">⚡</span> Generate Dokumen</button>
+    <div class="nav-section-label">Referensi</div>
+    <button class="nav-item" data-page="panduan"><span class="nav-icon">📖</span> Panduan Arguments</button>
+    <button class="nav-item" data-page="master"><span class="nav-icon">🗄️</span> Data Master</button>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="sidebar-user" id="sidebar-user">
+      <div class="sidebar-user-avatar" id="user-avatar">👤</div>
+      <div class="sidebar-user-info">
+        <strong id="user-name">—</strong>
+        <span id="user-email">—</span>
+      </div>
+    </div>
+    <button type="button" class="nav-item sidebar-logout" onclick="Auth.signOut()">
+      <span class="nav-icon">🚪</span> Keluar
+    </button>
+  </div>
+</aside>
+<main class="main">
+  <header class="topbar">
+    <div>
+      <div class="topbar-title" id="topbar-title">Dashboard</div>
+      <div class="topbar-subtitle" id="topbar-subtitle"></div>
+    </div>
+    <div class="topbar-actions">
+      <span id="cloud-sync-badge" class="cloud-sync-badge" style="display:none" title="Status penyimpanan"></span>
+      <button class="btn btn-secondary btn-sm" onclick="navigateTo('panduan')">📖 Panduan</button>
+      <button class="btn btn-primary btn-sm" onclick="navigateTo('template')">📤 Upload Template</button>
+    </div>
+  </header>
+  <div class="page-content" id="main-content"></div>
+</main>
+<div class="toast-container" id="toast-container"></div>
+<script src="js/config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/auth.js"></script>
+<script src="js/db.js"></script>
+<script src="js/template-storage.js"></script>
+<script src="js/terbilang.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pizzip@3.1.1/dist/pizzip.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/docxtemplater@3.49.0/build/docxtemplater.js"></script>
+<script src="js/app.js"></script>
+<script src="js/master.js"></script>
+<script src="js/perjalanan.js"></script>
+<script src="js/generate.js"></script>
+<script src="js/pages.js"></script>
+</body>
+</html>

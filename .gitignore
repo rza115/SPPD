@@ -1,0 +1,9 @@
+.env
+.env.local
+node_modules/
+.DS_Store
+Thumbs.db
+
+# config.js berisi kredensial proyek — gunakan config.example.js sebagai template
+# Uncomment baris berikut jika Anda tidak ingin commit config lokal:
+# js/config.js
