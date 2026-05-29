@@ -1,0 +1,40 @@
+================================================================
+PATCH untuk index.html — tambah 3 hal berikut:
+================================================================
+
+1. Di <head>, tambah CSS baru setelah style.css:
+──────────────────────────────────────────────
+<link rel="stylesheet" href="css/surat-tugas-ai.css">
+
+
+2. Di sidebar nav, section "Dokumen", tambah 1 nav item
+   (letakkan setelah tombol generate):
+──────────────────────────────────────────────
+<button class="nav-item" data-page="surat-tugas-ai">
+  <span class="nav-icon">🤖</span> Surat Tugas AI
+</button>
+
+
+3. Di bagian bawah, tambah script SEBELUM </body>
+   (letakkan setelah js/generate.js, sebelum js/pages.js):
+──────────────────────────────────────────────
+<script src="js/surat-tugas-ai.js"></script>
+
+================================================================
+HASIL AKHIR script loading order:
+================================================================
+<script src="js/config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/auth.js"></script>
+<script src="js/db.js"></script>
+<script src="js/template-storage.js"></script>
+<script src="js/terbilang.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pizzip@3.1.1/dist/pizzip.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/docxtemplater@3.49.0/build/docxtemplater.js"></script>
+<script src="js/app.js"></script>
+<script src="js/master.js"></script>
+<script src="js/perjalanan.js"></script>
+<script src="js/generate.js"></script>
+<script src="js/surat-tugas-ai.js"></script>   ← BARU
+<script src="js/pages.js"></script>
