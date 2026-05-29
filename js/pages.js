@@ -327,6 +327,8 @@ PAGES.perjalanan = `<div id="perjalanan-container"></div>`;
 
 PAGES.generate = `<div id="generate-container"></div>`;
 
+PAGES['surat-tugas-ai'] = `<div id="st-ai-container"></div>`;
+
 // ── Page Loader ──────────────────────────────────────────
 function loadPage(pageId) {
   const container = document.getElementById('main-content');
@@ -344,6 +346,7 @@ function loadPage(pageId) {
   if (pageId === 'master')     renderUnitKerja();
   if (pageId === 'perjalanan') { PJD.reset(); renderPerjalananList(); }
   if (pageId === 'generate')   renderGeneratePage();
+  if (pageId === 'surat-tugas-ai')   renderSuratTugasAI();
 }
 
 function initTemplateUpload() {
@@ -381,6 +384,8 @@ const PAGE_TITLES = {
   master:     { title: 'Data Master',          sub: 'Pegawai, unit kerja, tarif, dan kode rekening' },
   perjalanan: { title: 'Perjalanan Dinas',     sub: 'Buat dan kelola perjalanan dinas' },
   generate:   { title: 'Generate Dokumen',     sub: 'Buat dokumen perjalanan dinas' },
+  'surat-tugas-ai' : {title : 'Surat Tugas AI', sub   : 'Draft surat dengan bantuan Gemini — review & generate .docx'
+},
 };
 
 function navigateTo(pageId) {
