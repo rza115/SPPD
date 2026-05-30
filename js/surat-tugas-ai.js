@@ -504,7 +504,11 @@ async function staiGenerateDocx() {
   if (!tmpl)
     return toast('File template tidak tersedia. Pilih template yang tidak bertanda "file belum tersambung", atau upload ulang template surat tugas.', 'error', 6000);
 
-  if (typeof PizZip === 'undefined' || typeof Docxtemplater === 'undefined')
+  const DocxClass = typeof getDocxtemplaterClass === 'function'
+    ? getDocxtemplaterClass()
+    : (window.Docxtemplater || window.docxtemplater || null);
+
+  if (typeof PizZip === 'undefined' || !DocxClass)
     return toast('Library docxtemplater belum dimuat', 'error');
 
   try {
@@ -515,9 +519,10 @@ async function staiGenerateDocx() {
     for (let i = 0; i < bytes.length; i++) buf[i] = bytes.charCodeAt(i);
 
     const piz = new PizZip(buf.buffer);
-    const doc = new Docxtemplater(piz, {
+    const doc = new DocxClass(piz, {
       paragraphLoop : true,
       linebreaks    : true,
+      delimiters    : { start: '{{', end: '}}' },
       nullGetter    : () => '',
     });
     doc.render(args);
