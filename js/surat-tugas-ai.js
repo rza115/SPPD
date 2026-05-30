@@ -390,7 +390,9 @@ async function staiGenerate() {
       }),
     });
 
-    const data = await res.json();
+    const data = await res.json().catch(() => ({
+      error: 'Server mengembalikan respons yang tidak bisa dibaca',
+    }));
 
     if (!res.ok || data.error) {
       throw new Error(data.error || 'Gagal menghubungi server');
@@ -406,11 +408,17 @@ async function staiGenerate() {
     if (dasarEl) dasarEl.value = data.dasar;
     if (deskEl)  deskEl.value  = data.deskripsi_tugas;
 
-    if (status) status.innerHTML = '<div class="alert alert-success">✅ Draft berhasil dibuat. Silakan review dan edit sesuai kebutuhan.</div>';
-    toast('Draft AI berhasil dibuat', 'success');
+    if (status) {
+      const alertType = data.fallback ? 'alert-warning' : 'alert-success';
+      const message = data.fallback
+        ? (data.warning || 'Kuota Gemini sedang penuh. Draft sementara dibuat otomatis dan bisa diedit.')
+        : '✅ Draft berhasil dibuat. Silakan review dan edit sesuai kebutuhan.';
+      status.innerHTML = `<div class="alert ${alertType}">${message}</div>`;
+    }
+    toast(data.fallback ? 'Draft sementara berhasil dibuat' : 'Draft AI berhasil dibuat', data.fallback ? 'warning' : 'success');
 
   } catch (err) {
-    console.error(err);
+    console.warn(err);
     if (status) status.innerHTML = `<div class="alert alert-warning">⚠️ ${err.message}</div>`;
     toast('Gagal: ' + err.message, 'error');
   } finally {

@@ -48,8 +48,20 @@ export default async function handler(req, res) {
 
     if (!geminiRes.ok) {
       const errText = await geminiRes.text();
-      console.error('Gemini error:', errText);
-      return res.status(502).json({ error: 'Gemini API error: ' + geminiRes.status });
+      console.warn('Gemini error:', errText);
+
+      if (geminiRes.status === 429) {
+        const fallback = buildFallbackDraft({ mode, keperluan, tujuan_instansi, peserta, tanggal, teks_existing });
+        return res.status(200).json({
+          ...fallback,
+          fallback: true,
+          warning: 'Kuota Gemini sedang penuh. Draft sementara dibuat otomatis dan bisa diedit.',
+        });
+      }
+
+      return res.status(geminiRes.status >= 400 && geminiRes.status < 500 ? geminiRes.status : 502).json({
+        error: getGeminiErrorMessage(geminiRes.status),
+      });
     }
 
     const geminiData = await geminiRes.json();
@@ -76,6 +88,34 @@ export default async function handler(req, res) {
     console.error('Handler error:', err);
     return res.status(500).json({ error: err.message });
   }
+}
+
+function getGeminiErrorMessage(status) {
+  if (status === 400) return 'Permintaan ke Gemini tidak valid. Coba ringkas input lalu generate ulang.';
+  if (status === 401 || status === 403) return 'API key Gemini belum valid atau tidak punya akses.';
+  if (status === 429) return 'Kuota Gemini sedang penuh. Coba lagi beberapa saat.';
+  if (status >= 500) return 'Layanan Gemini sedang bermasalah. Coba lagi nanti.';
+  return `Gemini belum bisa memproses permintaan saat ini. Kode: ${status}`;
+}
+
+function buildFallbackDraft({ mode, keperluan, tujuan_instansi, peserta, tanggal, teks_existing }) {
+  const tujuan = tujuan_instansi || 'instansi terkait';
+  const waktu = tanggal || 'waktu yang telah ditentukan';
+  const pesertaNames = Array.isArray(peserta) && peserta.length
+    ? peserta.map(p => p.nama).filter(Boolean).join(', ')
+    : 'pegawai yang ditugaskan';
+
+  if (mode === 'perbaiki' && teks_existing) {
+    return {
+      dasar: `Dalam rangka pelaksanaan tugas kedinasan terkait ${keperluan}, diperlukan penugasan kepada ${pesertaNames} untuk melaksanakan kegiatan pada ${tujuan}.`,
+      deskripsi_tugas: `${teks_existing.trim()}\n\nMelaksanakan koordinasi dan/atau kegiatan terkait ${keperluan} pada ${tujuan} pada ${waktu}. Melaporkan pelaksanaan kegiatan kepada pimpinan.`,
+    };
+  }
+
+  return {
+    dasar: `Dalam rangka pelaksanaan program kerja dinas terkait ${keperluan}, diperlukan penugasan kepada ${pesertaNames} untuk melaksanakan kegiatan pada ${tujuan}.`,
+    deskripsi_tugas: `Melaksanakan ${keperluan} pada ${tujuan} pada ${waktu}. Pegawai yang ditugaskan agar melaksanakan kegiatan dengan penuh tanggung jawab serta berkoordinasi dengan pihak terkait. Melaporkan pelaksanaan kegiatan kepada pimpinan.`,
+  };
 }
 
 // ─── PROMPT BUILDER ───────────────────────────────────────
