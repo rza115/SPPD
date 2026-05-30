@@ -496,14 +496,16 @@ async function staiGenerateDocx() {
   if (!f.template_id)           return toast('Pilih template dokumen terlebih dahulu', 'error');
 
   const tmpl = AppState.templates.find(t => t.id === f.template_id);
-  if (!tmpl?.fileData)          return toast('File template tidak tersedia', 'error');
+  if (!tmpl || !TemplateStorage.hasFile(tmpl))
+    return toast('File template tidak tersedia', 'error');
 
   if (typeof PizZip === 'undefined' || typeof Docxtemplater === 'undefined')
     return toast('Library docxtemplater belum dimuat', 'error');
 
   try {
-    const args  = staiBuildArgs();
-    const bytes = atob(tmpl.fileData);
+    const args    = staiBuildArgs();
+    const tmplB64 = await TemplateStorage.downloadBase64(tmpl);
+    const bytes   = atob(tmplB64);
     const buf   = new Uint8Array(bytes.length);
     for (let i = 0; i < bytes.length; i++) buf[i] = bytes.charCodeAt(i);
 
