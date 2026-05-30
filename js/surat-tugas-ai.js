@@ -248,7 +248,12 @@ function staiBottomFormHTML(f) {
     .filter(t => t.jenis === 'surat_tugas');
 
   const templOpts = templates.length
-    ? templates.map(t => `<option value="${t.id}" ${f.template_id===t.id?'selected':''}>${t.nama}${t.scope==='global'?' 🌐':''}</option>`).join('')
+    ? templates.map(t => {
+      const hasFile = typeof TemplateStorage !== 'undefined' && TemplateStorage.hasFile(t);
+      const disabled = hasFile ? '' : 'disabled';
+      const label = `${t.nama}${t.scope==='global'?' 🌐':''}${hasFile ? '' : ' (file belum tersambung)'}`;
+      return `<option value="${t.id}" ${f.template_id===t.id?'selected':''} ${disabled}>${label}</option>`;
+    }).join('')
     : '<option value="">— Belum ada template surat_tugas —</option>';
 
   return `
@@ -282,7 +287,7 @@ function staiBottomFormHTML(f) {
           </select>
           ${templates.length === 0
             ? '<div class="form-text">⚠️ Belum ada template jenis "surat_tugas". <a href="#" onclick="navigateTo(\'template\');return false">Upload di Kelola Template →</a></div>'
-            : ''}
+            : '<div class="form-text">Template bertanda file belum tersambung perlu diupload ulang atau pilih template lain.</div>'}
         </div>
         <div class="flex gap-2" style="margin-top:4px">
           <button class="btn btn-secondary" style="flex:1;justify-content:center"
@@ -495,9 +500,9 @@ async function staiGenerateDocx() {
     return toast('Isi dasar atau deskripsi tugas terlebih dahulu', 'error');
   if (!f.template_id)           return toast('Pilih template dokumen terlebih dahulu', 'error');
 
-  const tmpl = AppState.templates.find(t => t.id === f.template_id);
-  if (!tmpl || !TemplateStorage.hasFile(tmpl))
-    return toast('File template tidak tersedia', 'error');
+  const tmpl = staiResolveTemplate(f.template_id);
+  if (!tmpl)
+    return toast('File template tidak tersedia. Pilih template yang tidak bertanda "file belum tersambung", atau upload ulang template surat tugas.', 'error', 6000);
 
   if (typeof PizZip === 'undefined' || typeof Docxtemplater === 'undefined')
     return toast('Library docxtemplater belum dimuat', 'error');
@@ -533,6 +538,16 @@ async function staiGenerateDocx() {
     console.error(err);
     toast('Generate gagal: ' + err.message, 'error');
   }
+}
+
+function staiResolveTemplate(templateId) {
+  const templates = AppState.templates.filter(t => t.jenis === 'surat_tugas');
+  const selected = templates.find(t => t.id === templateId);
+  if (selected && TemplateStorage.hasFile(selected)) return selected;
+
+  const available = templates.filter(t => TemplateStorage.hasFile(t));
+  if (available.length === 1) return available[0];
+  return null;
 }
 
 function staiBuildArgs() {

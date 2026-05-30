@@ -55,8 +55,16 @@ const TemplateStorage = {
     });
   },
 
+  getFileData(template) {
+    return template?.fileData || template?.file_data || template?.base64 || template?.data || '';
+  },
+
+  getStoragePath(template) {
+    return template?.storagePath || template?.storage_path || template?.path || '';
+  },
+
   hasFile(template) {
-    return !!(template?.storagePath || template?.fileData);
+    return !!(this.getStoragePath(template) || this.getFileData(template));
   },
 
   /** Upload file; kembalikan storagePath */
@@ -71,12 +79,15 @@ const TemplateStorage = {
   },
 
   async downloadBase64(template) {
-    if (template.fileData) return template.fileData;
-    if (!template.storagePath) throw new Error('File template tidak ditemukan');
+    const fileData = this.getFileData(template);
+    if (fileData) return fileData;
+
+    const storagePath = this.getStoragePath(template);
+    if (!storagePath) throw new Error('File template tidak ditemukan');
 
     const { data, error } = await this._sb().storage
       .from(this.BUCKET)
-      .download(template.storagePath);
+      .download(storagePath);
     if (error) throw error;
 
     const buffer = await data.arrayBuffer();
