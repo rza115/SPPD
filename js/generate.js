@@ -171,9 +171,14 @@ function chunkArray(arr, size) {
 function buildUntukPembayaran(ps, pjd) {
   const tingkat = getTingkatBiaya(pjd.jenis_perjalanan);
   const tujuan  = buildTujuanText(pjd);
-  return ps.dapat_transport
+  let text = ps.dapat_transport
     ? `Biaya Uang Harian dan Transport Perjalanan Dinas ${tingkat} ke ${tujuan}`
     : `Biaya Uang Harian Perjalanan Dinas ${tingkat} ke ${tujuan}`;
+  const maksud = (pjd.maksud_perjalanan || '').trim();
+  if (maksud) {
+    text += /^dalam\s+rangka/i.test(maksud) ? ' ' + maksud : ' dalam rangka ' + maksud;
+  }
+  return text;
 }
 
 function emptyKwitansiSlotFields(slot) {
