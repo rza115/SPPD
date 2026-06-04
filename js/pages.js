@@ -12,12 +12,12 @@ PAGES.dashboard = `
   </div>
 </div>
 
-<!-- <div class="phases mb-6">
+<div class="phases mb-6">
   <div class="phase-card done"><div class="phase-num">✓</div><div class="phase-title">Phase 1</div><div class="phase-desc">Foundation, Panduan & Template Manager</div></div>
   <div class="phase-card done"><div class="phase-num">✓</div><div class="phase-title">Phase 2</div><div class="phase-desc">Data Master: Pegawai, Tarif, Kecamatan, SIPD</div></div>
   <div class="phase-card done"><div class="phase-num">✓</div><div class="phase-title">Phase 3</div><div class="phase-desc">Form Perjalanan Dinas &amp; Kalkulasi Realtime</div></div>
   <div class="phase-card done"><div class="phase-num">✓</div><div class="phase-title">Phase 4</div><div class="phase-desc">Generate Engine &amp; ZIP Output</div></div>
-</div> -->
+</div>
 
 <div class="stats-grid mb-6">
   <div class="stat-card navy"><span class="stat-icon">📄</span><div class="stat-value" id="stat-templates">0</div><div class="stat-label">Template Tersimpan</div></div>
@@ -327,6 +327,8 @@ PAGES.perjalanan = `<div id="perjalanan-container"></div>`;
 
 PAGES.generate = `<div id="generate-container"></div>`;
 
+PAGES.rekap = `<div id="rekap-container"></div>`;
+
 PAGES['surat-tugas-ai'] = `<div id="st-ai-container"></div>`;
 
 // ── Page Loader ──────────────────────────────────────────
@@ -346,6 +348,7 @@ function loadPage(pageId) {
   if (pageId === 'master')     renderUnitKerja();
   if (pageId === 'perjalanan') { PJD.reset(); renderPerjalananList(); }
   if (pageId === 'generate')   renderGeneratePage();
+  if (pageId === 'rekap')      renderRekapPage();
   if (pageId === 'surat-tugas-ai')   renderSuratTugasAI();
 }
 
@@ -386,6 +389,7 @@ const PAGE_TITLES = {
   generate:   { title: 'Generate Dokumen',     sub: 'Buat dokumen perjalanan dinas' },
   'surat-tugas-ai' : {title : 'Surat Tugas AI', sub   : 'Draft surat dengan bantuan Gemini — review & generate .docx'
 },
+  rekap           : { title: 'Rekap Rincian', sub: 'Generate laporan rekap rincian perjalanan dinas (.xlsx)' },
 };
 
 function navigateTo(pageId) {
