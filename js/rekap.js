@@ -213,6 +213,14 @@ function rekapDetectTahun(groups) {
   return Math.max(...groups.map(g => g.tahunAnggaran));
 }
 
+/** Ambil PPTK dominan dari kumpulan grup (prioritas: grup pertama yang ada data-nya) */
+function rekapDetectPptk(groups) {
+  for (const g of groups) {
+    if (g.namaPptk) return { nama: g.namaPptk, nip: g.nipPptk };
+  }
+  return { nama: '', nip: '' };
+}
+
 // ─────────────────────────────────────────────────────────
 // DATA BUILDER
 // ─────────────────────────────────────────────────────────
@@ -254,6 +262,8 @@ function buildRekapGroups(pjdIds) {
         tahunAnggaran: new Date(pjd.tanggal_berangkat).getFullYear() || new Date().getFullYear(),
         peserta      : pesertaRows,
         totalGrup    : pesertaRows.reduce((s, r) => s + r.totalBiaya, 0),
+        namaPptk     : pjd.nama_pptk || '',
+        nipPptk      : pjd.nip_pptk  || '',
       };
     });
 }
@@ -336,6 +346,27 @@ function renderRekapPreview(groups) {
         ${formatRupiah(grandTotal)}
       </td>
     </tr>`;
+
+  // ── PPTK ───────────────────────────────────────────────
+  const pptk = rekapDetectPptk(groups);
+  if (pptk.nama) {
+    dataRows += `
+      <tr>
+        <td colspan="11" style="border:none;padding:5px 0"></td>
+        <td colspan="4" style="border:none;padding:6px 5px;font-size:10px;
+            text-align:center;font-weight:700">Pejabat Pelaksana Teknis Kegiatan</td>
+      </tr>
+      <tr>
+        <td colspan="11" style="border:none"></td>
+        <td colspan="4" style="border:none;padding:2px 5px;font-size:10px;
+            text-align:center;font-weight:700">${pptk.nama}</td>
+      </tr>
+      <tr>
+        <td colspan="11" style="border:none"></td>
+        <td colspan="4" style="border:none;padding:2px 5px;font-size:10px;
+            text-align:center">NIP. ${pptk.nip || '—'}</td>
+      </tr>`;
+  }
 
   return `
     <div style="font-size:10px;min-width:860px">
@@ -646,6 +677,41 @@ async function generateRekapXlsx(groups) {
   ws.getCell(r, 15).font      = { bold: true, size: 11, color: { argb: 'FFFFFFFF' } };
   ws.getCell(r, 15).numFmt    = '#,##0';
   ws.getCell(r, 15).alignment = { horizontal: 'right', vertical: 'middle' };
+  r++;
+
+  // ── PPTK (sesuai draft: baris kosong, label, nama, NIP) ──
+  const pptk = rekapDetectPptk(groups);
+  if (pptk.nama) {
+    // Baris kosong sebagai spacer
+    ws.getRow(r).height = 10;
+    r++;
+
+    // Baris label "Pejabat Pelaksana Teknis Kegiatan"
+    ws.getRow(r).height = 18;
+    ws.mergeCells(r, 11, r, 15);
+    const lblCell       = ws.getCell(r, 11);
+    lblCell.value       = 'Pejabat Pelaksana Teknis Kegiatan';
+    lblCell.font        = { bold: true, size: 10 };
+    lblCell.alignment   = { horizontal: 'center', vertical: 'middle' };
+    r++;
+
+    // Baris nama PPTK
+    ws.getRow(r).height = 18;
+    ws.mergeCells(r, 11, r, 15);
+    const namaCell      = ws.getCell(r, 11);
+    namaCell.value      = pptk.nama;
+    namaCell.font       = { bold: true, size: 10 };
+    namaCell.alignment  = { horizontal: 'center', vertical: 'middle' };
+    r++;
+
+    // Baris NIP PPTK
+    ws.getRow(r).height = 16;
+    ws.mergeCells(r, 11, r, 15);
+    const nipCell       = ws.getCell(r, 11);
+    nipCell.value       = `NIP. ${pptk.nip || '—'}`;
+    nipCell.font        = { size: 10 };
+    nipCell.alignment   = { horizontal: 'center', vertical: 'middle' };
+  }
 
   // ── Download ───────────────────────────────────────────
   const buf    = await wb.xlsx.writeBuffer();
