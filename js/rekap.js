@@ -233,6 +233,7 @@ function buildRekapGroups(pjdIds) {
     .map((pjd, idx) => {
       const lama   = hitungLama(pjd.tanggal_berangkat, pjd.tanggal_kembali) || 1;
       const sorted = sortedPeserta(pjd);
+      const pptk   = getPegawaiById(pjd.pptk_id);
 
       const pesertaRows = sorted.map((ps, i) => {
         const pgw = getPegawaiById(ps.pegawai_id);
@@ -262,8 +263,8 @@ function buildRekapGroups(pjdIds) {
         tahunAnggaran: new Date(pjd.tanggal_berangkat).getFullYear() || new Date().getFullYear(),
         peserta      : pesertaRows,
         totalGrup    : pesertaRows.reduce((s, r) => s + r.totalBiaya, 0),
-        namaPptk     : pjd.nama_pptk || '',
-        nipPptk      : pjd.nip_pptk  || '',
+        namaPptk     : pjd.nama_pptk || pptk?.nama_lengkap || '',
+        nipPptk      : pjd.nip_pptk  || pptk?.nip || '',
       };
     });
 }
