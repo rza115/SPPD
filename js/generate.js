@@ -37,6 +37,7 @@ function calcGrandTotalFull(pjd) {
 
 function buildTujuanText(pjd) {
   if (pjd.jenis_perjalanan === 'dalam_kota') {
+    if (pjd.nama_tempat) return pjd.nama_tempat;
     const kec = getKecById(pjd.kecamatan_id);
     return kec ? 'Kecamatan ' + kec.nama : '—';
   }

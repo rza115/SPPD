@@ -126,7 +126,7 @@ function renderPJDCard(p) {
   }).join(', ');
 
   const tujuan = p.jenis_perjalanan === 'dalam_kota'
-    ? (getKecById(p.kecamatan_id)?.nama ? 'Kec. ' + getKecById(p.kecamatan_id).nama : '—')
+    ? (p.nama_tempat || (getKecById(p.kecamatan_id)?.nama ? 'Kec. ' + getKecById(p.kecamatan_id).nama : '—'))
     : (p.alamat_tujuan || '—');
 
   const lama   = hitungLama(p.tanggal_berangkat, p.tanggal_kembali);
@@ -338,7 +338,11 @@ function renderStep1(body) {
               ? `<select class="form-control" id="f-kecamatan" onchange="PJD.form.kecamatan_id=this.value">
                   <option value="">— Pilih Kecamatan —</option>
                   ${kecs.map(k => `<option value="${k.id}" ${f.kecamatan_id===k.id?'selected':''}>${k.nama} ${k.tarif_transport>0?'('+formatRupiah(k.tarif_transport)+')':''}</option>`).join('')}
-                </select>`
+                </select>
+                <input class="form-control" id="f-nama-tempat" style="margin-top:8px" value="${f.nama_tempat||''}"
+                  placeholder="Nama tempat (opsional): Kantor Kecamatan Kemang"
+                  oninput="PJD.form.nama_tempat=this.value">
+                <div class="form-text">Isi jika ingin nama tempat spesifik muncul di dokumen, bukan cuma nama kecamatan.</div>`
               : `<input class="form-control" id="f-alamat" value="${f.alamat_tujuan||''}"
                   placeholder="Alamat lengkap tujuan perjalanan..."
                   oninput="PJD.form.alamat_tujuan=this.value">`}
@@ -407,7 +411,11 @@ function updateTujuanField() {
     field.innerHTML = `<select class="form-control" id="f-kecamatan" onchange="PJD.form.kecamatan_id=this.value">
       <option value="">— Pilih Kecamatan —</option>
       ${kecs.map(k => `<option value="${k.id}" ${PJD.form.kecamatan_id===k.id?'selected':''}>${k.nama} ${k.tarif_transport>0?'('+formatRupiah(k.tarif_transport)+')':''}</option>`).join('')}
-    </select>`;
+    </select>
+    <input class="form-control" id="f-nama-tempat" style="margin-top:8px" value="${PJD.form.nama_tempat||''}"
+      placeholder="Nama tempat (opsional): Kantor Kecamatan Kemang"
+      oninput="PJD.form.nama_tempat=this.value">
+    <div class="form-text">Isi jika ingin nama tempat spesifik muncul di dokumen, bukan cuma nama kecamatan.</div>`;
     PJD.form.alamat_tujuan = '';
   } else {
     if (label) label.textContent = 'Alamat Tujuan *';
@@ -707,7 +715,7 @@ function renderStep4(body) {
   const f      = PJD.form;
   const lama   = getLamaPerjalanan();
   const tujuan = f.jenis_perjalanan === 'dalam_kota'
-    ? (getKecById(f.kecamatan_id)?.nama ? 'Kecamatan ' + getKecById(f.kecamatan_id).nama : '—')
+    ? (f.nama_tempat || (getKecById(f.kecamatan_id)?.nama ? 'Kecamatan ' + getKecById(f.kecamatan_id).nama : '—'))
     : (f.alamat_tujuan || '—');
 
   const sipdText = (() => {
