@@ -8,6 +8,7 @@ const KEYS = {
   pegawai   : 'sppd_pegawai',
   tarif     : 'sppd_tarif',
   kecamatan : 'sppd_kecamatan',
+  kotaTujuan: 'sppd_kota_tujuan',
   sipd      : 'sppd_sipd',
   perjalanan: 'sppd_perjalanan',
   templates : 'sppd_templates',
@@ -25,6 +26,13 @@ const KECAMATAN_SEED = [
   'Megamendung','Nanggung','Pamijahan','Parung','Parung Panjang',
   'Rancabungur','Rumpin','Sukamakmur','Sukaraja','Sukajaya',
   'Tajurhalang','Tamansari','Tanjungsari','Tenjo','Tenjolaya',
+];
+
+// Preset kota besar untuk perjalanan luar kota/luar provinsi.
+// Tarif transport PP diisi manual per kota di Data Master (default 0).
+const KOTA_TUJUAN_SEED = [
+  'Jakarta','Bandung','Surabaya','Semarang','Yogyakarta',
+  'Medan','Makassar','Palembang','Surakarta (Solo)','Denpasar',
 ];
 
 const DB = {
@@ -204,6 +212,16 @@ const DB = {
     this.set(KEYS.kecamatan, data);
   },
 
+  _seedKotaTujuan() {
+    if (this.getArr(KEYS.kotaTujuan).length > 0) return;
+    const data = KOTA_TUJUAN_SEED.map((nama, i) => ({
+      id: 'kota_' + (i + 1),
+      nama,
+      tarif_transport: 0,
+    }));
+    this.set(KEYS.kotaTujuan, data);
+  },
+
   _seedTarif() {
     if (this.get(KEYS.tarif)) return;
     this.set(KEYS.tarif, {
@@ -228,6 +246,7 @@ const DB = {
     }
 
     this._seedKecamatan();
+    this._seedKotaTujuan();
     this._seedTarif();
 
     // Default array kosong agar getArr konsisten

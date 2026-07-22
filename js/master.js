@@ -40,6 +40,7 @@ function switchTab(tabId, btnEl) {
     'pegawai':    renderPegawai,
     'tarif':      renderTarif,
     'kecamatan':  renderKecamatan,
+    'kota-tujuan': renderKotaTujuan,
     'sipd':       renderSipd,
   };
   if (renders[tabId]) renders[tabId]();
@@ -441,6 +442,82 @@ function saveAllKecamatan() {
   DB.set(KEYS.kecamatan, list);
   renderKecamatan(document.getElementById('kec-search')?.value?.toLowerCase() || '');
   toast('Tarif kecamatan disimpan', 'success');
+}
+
+// ══════════════════════════════════════════════════════════
+// KOTA TUJUAN (LUAR DAERAH / LUAR PROVINSI)
+// ══════════════════════════════════════════════════════════
+function renderKotaTujuan(filter = '') {
+  let list = DB.getArr(KEYS.kotaTujuan);
+  const allList = list;
+  if (filter) list = list.filter(k => k.nama.toLowerCase().includes(filter));
+
+  const filled = allList.filter(k => k.tarif_transport > 0).length;
+  const c = document.getElementById('tab-kota-tujuan');
+  if (!c) return;
+
+  c.innerHTML = `
+    <div class="table-toolbar">
+      <div class="table-toolbar-left">
+        <h4 style="font-size:14px;font-weight:700">Tarif Transport per Kota Tujuan</h4>
+        <span class="badge badge-auto">${allList.length} kota</span>
+        <span class="badge ${filled === allList.length ? 'badge-auto' : 'badge-manual'}">${filled}/${allList.length} terisi</span>
+      </div>
+      <div class="table-toolbar-right">
+        <div class="search-bar kota-search">
+          <span>🔍</span>
+          <input type="text" placeholder="Cari kota..." id="kota-search"
+            oninput="renderKotaTujuan(this.value.toLowerCase())" value="${filter}">
+        </div>
+        <button class="btn btn-secondary btn-sm" onclick="saveAllKotaTujuan()">💾 Simpan Semua</button>
+      </div>
+    </div>
+    <div class="alert alert-info mb-4">
+      💡 Preset 10 kota besar untuk perjalanan Luar Kota/Luar Provinsi. Isi tarif transport PP (pesawat/kereta/dll, perkiraan) sebagai saran otomatis — tetap bisa diedit manual per peserta saat input perjalanan dinas.
+    </div>
+    <div class="card">
+      <div class="table-wrap"><table>
+        <thead><tr>
+          <th width="40">No</th>
+          <th>Kota Tujuan</th>
+          <th width="220">Tarif Transport PP (Rp)</th>
+          <th width="120">Preview</th>
+        </tr></thead>
+        <tbody>
+          ${list.map((k, i) => `
+            <tr>
+              <td class="text-muted">${allList.indexOf(k) + 1}</td>
+              <td><strong>${k.nama}</strong></td>
+              <td>
+                <input type="number" class="form-control" id="kota-tarif-${k.id}"
+                  value="${k.tarif_transport||0}" min="0" step="1000"
+                  style="font-size:13px;padding:7px 10px" placeholder="0"
+                  onchange="previewKotaTarif('${k.id}')">
+              </td>
+              <td id="kota-preview-${k.id}" class="text-muted" style="font-size:12px">
+                ${k.tarif_transport > 0 ? formatRupiah(k.tarif_transport) : '<span style="opacity:.4">Belum diisi</span>'}
+              </td>
+            </tr>`).join('')}
+        </tbody>
+      </table></div>
+    </div>`;
+}
+
+function previewKotaTarif(id) {
+  const val = parseInt(document.getElementById('kota-tarif-' + id)?.value) || 0;
+  const el = document.getElementById('kota-preview-' + id);
+  if (el) el.innerHTML = val > 0 ? formatRupiah(val) : '<span style="opacity:.4">Belum diisi</span>';
+}
+
+function saveAllKotaTujuan() {
+  const list = DB.getArr(KEYS.kotaTujuan);
+  list.forEach(k => {
+    const input = document.getElementById('kota-tarif-' + k.id);
+    if (input) k.tarif_transport = parseInt(input.value) || 0;
+  });
+  DB.set(KEYS.kotaTujuan, list);
+  renderKotaTujuan(document.getElementById('kota-search')?.value?.toLowerCase() || '');
+  toast('Tarif kota tujuan disimpan', 'success');
 }
 
 // ══════════════════════════════════════════════════════════
