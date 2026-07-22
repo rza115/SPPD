@@ -1,0 +1,115 @@
+diff --git a/js/perjalanan.js b/js/perjalanan.js
+index 9dcc188..33d5576 100644
+--- a/js/perjalanan.js
++++ b/js/perjalanan.js
+@@ -29,6 +29,10 @@ const PJD = {
+   }
+ };
+ 
++// State UI buat daftar perjalanan (search & limit tampilan), terpisah dari
++// PJD.form (state wizard) biar nggak kereset tiap buka/tutup form.
++const PJD_LIST_UI = { search: '', limit: 50 };
++
+ // ─── HELPERS ──────────────────────────────────────────────
+ const getPJDList  = () => DB.getArr(KEYS.perjalanan);
+ const savePJDList = (arr) => DB.set(KEYS.perjalanan, arr);
+@@ -112,31 +116,95 @@ function renderPerjalananPage() {
+ }
+ 
+ // ─── LIST VIEW ────────────────────────────────────────────
++function filterPJDList(list, search) {
++  if (!search || !search.trim()) return list;
++  const q = search.trim().toLowerCase();
++  return list.filter(p => {
++    const tujuan = p.jenis_perjalanan === 'dalam_kota'
++      ? (p.nama_tempat || getKecById(p.kecamatan_id)?.nama || '')
++      : (p.alamat_tujuan || '');
++    const pesertaNames = (p.peserta || []).map(ps => {
++      const pgw = getPegawaiById(ps.pegawai_id);
++      return pgw?.nama_lengkap || '';
++    }).join(' ');
++    const haystack = [p.nomor_surat, p.kode_no, tujuan, p.maksud_perjalanan, pesertaNames]
++      .filter(Boolean).join(' ').toLowerCase();
++    return haystack.includes(q);
++  });
++}
++
++function onPJDSearch(value) {
++  PJD_LIST_UI.search = value;
++  const el = document.getElementById('pjd-search');
++  const cursorPos = el ? el.selectionStart : null;
++  renderPerjalananList();
++  const newEl = document.getElementById('pjd-search');
++  if (newEl) {
++    newEl.focus();
++    if (cursorPos !== null) newEl.setSelectionRange(cursorPos, cursorPos);
++  }
++}
++
++function onPJDLimitChange(value) {
++  PJD_LIST_UI.limit = value === 'all' ? 'all' : (parseInt(value) || 50);
++  renderPerjalananList();
++}
++
+ function renderPerjalananList() {
+   const c = document.getElementById('perjalanan-container');
+   if (!c) return;
+-  const list = getPJDList().sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
++  const allList  = getPJDList().sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
++  const filtered = filterPJDList(allList, PJD_LIST_UI.search);
++  const limit    = PJD_LIST_UI.limit;
++  const shown    = limit === 'all' ? filtered : filtered.slice(0, limit);
++  const isSearching = !!PJD_LIST_UI.search.trim();
+ 
+   c.innerHTML = `
+     <div class="table-toolbar mb-6">
+       <div class="table-toolbar-left">
+         <h3 style="font-size:16px;font-weight:800">Daftar Perjalanan Dinas</h3>
+-        <span class="badge badge-auto">${list.length} perjalanan</span>
++        <span class="badge badge-auto">${allList.length} perjalanan</span>
++        ${isSearching ? `<span class="badge badge-manual">${filtered.length} hasil pencarian</span>` : ''}
+       </div>
+       <div class="table-toolbar-right">
++        <div class="search-bar" style="width:240px">
++          <span>🔍</span>
++          <input type="text" placeholder="Cari nomor surat, tujuan, peserta, maksud..." id="pjd-search"
++            oninput="onPJDSearch(this.value)" value="${PJD_LIST_UI.search}">
++        </div>
++        <select class="form-control" id="pjd-limit" style="width:auto" onchange="onPJDLimitChange(this.value)">
++          <option value="50" ${limit===50?'selected':''}>50 / halaman</option>
++          <option value="100" ${limit===100?'selected':''}>100 / halaman</option>
++          <option value="all" ${limit==='all'?'selected':''}>Tampilkan semua</option>
++        </select>
+         <button class="btn btn-primary" onclick="startNewPerjalanan()">
+           ✈️ Buat Perjalanan Dinas Baru
+         </button>
+       </div>
+     </div>
+ 
+-    ${list.length === 0 ? `
++    ${allList.length === 0 ? `
+       <div class="empty-state" style="padding:80px 24px">
+         <div class="empty-state-icon">✈️</div>
+         <div class="empty-state-title">Belum ada perjalanan dinas</div>
+         <div class="empty-state-desc" style="margin-bottom:20px">Klik tombol di atas untuk membuat perjalanan dinas baru</div>
+         <button class="btn btn-primary" onclick="startNewPerjalanan()">✈️ Buat Sekarang</button>
+-      </div>` : list.map(p => renderPJDCard(p)).join('')}`;
++      </div>`
++    : filtered.length === 0 ? `
++      <div class="empty-state" style="padding:80px 24px">
++        <div class="empty-state-icon">🔍</div>
++        <div class="empty-state-title">Nggak ada hasil buat "${PJD_LIST_UI.search}"</div>
++        <div class="empty-state-desc" style="margin-bottom:20px">Coba kata kunci lain, atau reset pencarian.</div>
++        <button class="btn btn-secondary" onclick="onPJDSearch('')">✕ Reset Pencarian</button>
++      </div>`
++    : shown.map(p => renderPJDCard(p)).join('') + (
++        limit !== 'all' && filtered.length > shown.length
++          ? `<div class="text-center" style="padding:16px;color:var(--text-3);font-size:13px">
++              Menampilkan ${shown.length} dari ${filtered.length} perjalanan.
++              <a href="#" onclick="onPJDLimitChange('all');return false">Tampilkan semua →</a>
++            </div>`
++          : ''
++      )}`;
+ }
+ 
+ function renderPJDCard(p) {
