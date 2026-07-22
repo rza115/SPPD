@@ -23,8 +23,10 @@ function sortedPeserta(pjd) {
 
 function calcPesertaFull(ps, pjd) {
   const lama   = hitungLama(pjd.tanggal_berangkat, pjd.tanggal_kembali) || 1;
+  const override = pjd.uang_harian_override;
+  const hasOverride = override !== null && override !== undefined && override !== '';
   const tarif  = DB.get('sppd_tarif') || {};
-  const harian = tarif[pjd.jenis_perjalanan]?.uang_harian || 0;
+  const harian = hasOverride ? (parseInt(override) || 0) : (tarif[pjd.jenis_perjalanan]?.uang_harian || 0);
   const totalH = harian * lama;
   const totalT = ps.dapat_transport
     ? (parseInt(ps.nominal_transport) || 0) * (parseInt(ps.jumlah_kali) || 1) * lama : 0;

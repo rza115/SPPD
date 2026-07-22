@@ -12,7 +12,12 @@ PAGES.dashboard = `
   </div>
 </div>
 
-
+<div class="phases mb-6">
+  <div class="phase-card done"><div class="phase-num">✓</div><div class="phase-title">Phase 1</div><div class="phase-desc">Foundation, Panduan & Template Manager</div></div>
+  <div class="phase-card done"><div class="phase-num">✓</div><div class="phase-title">Phase 2</div><div class="phase-desc">Data Master: Pegawai, Tarif, Kecamatan, SIPD</div></div>
+  <div class="phase-card done"><div class="phase-num">✓</div><div class="phase-title">Phase 3</div><div class="phase-desc">Form Perjalanan Dinas &amp; Kalkulasi Realtime</div></div>
+  <div class="phase-card done"><div class="phase-num">✓</div><div class="phase-title">Phase 4</div><div class="phase-desc">Generate Engine &amp; ZIP Output</div></div>
+</div>
 
 <div class="stats-grid mb-6">
   <div class="stat-card navy"><span class="stat-icon">📄</span><div class="stat-value" id="stat-templates">0</div><div class="stat-label">Template Tersimpan</div></div>
@@ -139,7 +144,7 @@ PAGES.panduan = `
   ['hari_tanggal_tugas','⚡ Computed','computed','Rangkaian hari dan tanggal untuk Surat Tugas<br><span class="text-muted text-sm">Nama hari + format tanggal lengkap</span>','hari Rabu, tanggal 15 April 2026'],
   ['kota_tanggal','⚡ Computed','computed','Baris kota dan tanggal untuk TTD<br><span class="text-muted text-sm">unit_kerja.kota + ", " + tanggal_surat</span>','Cibinong, 01 Oktober 2025'],
   ['untuk_pembayaran','⚡ Computed','computed','Teks "Untuk Pembayaran" di kwitansi<br><span class="text-muted text-sm">"Biaya Uang Harian [dan Transport] Perjalanan Dinas [jenis] ke [tujuan]" — [tujuan] ikut nama tempat manual kalau diisi</span>','Biaya Uang Harian dan Transport Perjalanan Dinas Dalam Daerah ke Kantor Kecamatan Kemang'],
-  ['uang_harian','⚡ Computed','computed','Nominal uang harian per peserta<br><span class="text-muted text-sm">tarif_uang_harian[jenis_perjalanan]</span>','Rp 170.000'],
+  ['uang_harian','⚡ Computed','computed','Nominal uang harian per peserta<br><span class="text-muted text-sm">tarif_uang_harian[jenis_perjalanan] — bisa dioverride manual di Step 1 (field "Uang Harian")</span>','Rp 170.000'],
   ['transport','⚡ Computed','computed','Total transport per peserta (0 jika tidak dapat)<br><span class="text-muted text-sm">nominal_transport × jumlah_kali × lama_perjalanan</span>','Rp 600.000'],
   ['total','⚡ Computed','computed','Total per peserta (kwitansi)<br><span class="text-muted text-sm">uang_harian + transport</span>','Rp 310.000'],
   ['total_terbilang','⚡ Computed','computed','Total per peserta dalam kata-kata Bahasa Indonesia','Tiga Ratus Sepuluh Ribu Rupiah'],

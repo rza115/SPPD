@@ -16,7 +16,7 @@ const PJD = {
     this.form = {
       nomor_surat: '', kode_no: '', tanggal_surat: '',
       tanggal_berangkat: '', tanggal_kembali: '',
-      jenis_perjalanan: 'dalam_kota',
+      jenis_perjalanan: 'dalam_kota', uang_harian_override: null,
       kecamatan_id: '', alamat_tujuan: '', kota_tujuan_id: '',
       alat_angkutan: 'Kendaraan Roda 4',
       kode_sipd_id: '', kode_sipd_manual: '',
@@ -53,6 +53,16 @@ function getTarifHarian(jenis) {
   return t[jenis]?.uang_harian || 0;
 }
 
+// Uang harian efektif: pakai override manual kalau diisi user di form,
+// fallback ke tarif Data Master seperti biasa.
+function getUangHarian(pjd) {
+  const override = pjd?.uang_harian_override;
+  if (override !== null && override !== undefined && override !== '') {
+    return parseInt(override) || 0;
+  }
+  return getTarifHarian(pjd?.jenis_perjalanan || 'dalam_kota');
+}
+
 function getTingkatBiaya(jenis) {
   const map = {
     dalam_kota: 'Dalam Daerah',
@@ -71,7 +81,7 @@ function getLamaPerjalanan() {
 // ─── KALKULASI PER PESERTA ────────────────────────────────
 function calcPeserta(p) {
   const lama   = getLamaPerjalanan() || 1;
-  const harian = getTarifHarian(PJD.form.jenis_perjalanan);
+  const harian = getUangHarian(PJD.form);
   const totalHarian    = harian * lama;
   const totalTransport = p.dapat_transport
     ? (parseInt(p.nominal_transport) || 0) * (parseInt(p.jumlah_kali) || 1) * lama
@@ -141,7 +151,7 @@ function renderPJDCard(p) {
 
   const lama   = hitungLama(p.tanggal_berangkat, p.tanggal_kembali);
   const gt     = (p.peserta || []).reduce((s, ps) => {
-    const cp = calcPesertaStatic(ps, p.jenis_perjalanan, lama);
+    const cp = calcPesertaStatic(ps, p.jenis_perjalanan, lama, p.uang_harian_override);
     return s + cp.total;
   }, 0);
 
@@ -180,9 +190,10 @@ function renderPJDCard(p) {
     </div>`;
 }
 
-function calcPesertaStatic(ps, jenis, lama) {
+function calcPesertaStatic(ps, jenis, lama, override) {
   const tarif  = DB.get('sppd_tarif') || {};
-  const harian = tarif[jenis]?.uang_harian || 0;
+  const hasOverride = override !== null && override !== undefined && override !== '';
+  const harian = hasOverride ? (parseInt(override) || 0) : (tarif[jenis]?.uang_harian || 0);
   const totalT = ps.dapat_transport
     ? (parseInt(ps.nominal_transport)||0) * (parseInt(ps.jumlah_kali)||1) * lama : 0;
   return { ...ps, total: harian * lama + totalT };
@@ -335,10 +346,11 @@ function renderStep1(body) {
           </div>
           <div class="form-group">
             <label class="form-label">Uang Harian</label>
-            <div id="tarif-preview" class="form-control" style="background:var(--bg);cursor:default;font-weight:700;color:var(--navy)">
-              ${formatRupiah(getTarifHarian(f.jenis_perjalanan||'dalam_kota'))} / orang / hari
-            </div>
-            <div class="form-text">Tarif dari master data. <a href="#" onclick="navigateTo('master');return false">Ubah di Data Master →</a></div>
+            <input type="number" class="form-control" id="f-uang-harian" min="0" step="1000"
+              style="font-weight:700;color:var(--navy)"
+              value="${(f.uang_harian_override !== null && f.uang_harian_override !== undefined && f.uang_harian_override !== '') ? f.uang_harian_override : (getTarifHarian(f.jenis_perjalanan||'dalam_kota') || '')}"
+              oninput="PJD.form.uang_harian_override=this.value;updateTarifPreview()">
+            <div class="form-text" id="tarif-preview-hint">${tarifHintText(f)}</div>
           </div>
         </div>
 
@@ -406,13 +418,33 @@ function updateLamaPreview() {
   }
 }
 
+function tarifHintText(f) {
+  const jenis  = f.jenis_perjalanan || 'dalam_kota';
+  const master = getTarifHarian(jenis);
+  const hasOverride = f.uang_harian_override !== null && f.uang_harian_override !== undefined && f.uang_harian_override !== '';
+  if (hasOverride) {
+    return `Diubah manual (tarif master: ${master > 0 ? formatRupiah(master) : 'belum diisi'}). <a href="#" onclick="resetUangHarian();return false">↺ Pakai tarif master</a>`;
+  }
+  return master > 0
+    ? `Tarif dari master data. <a href="#" onclick="navigateTo('master');return false">Ubah di Data Master →</a> — atau edit langsung di kolom ini.`
+    : `<span style="color:var(--red)">Tarif belum diisi di Data Master.</span> Isi manual di kolom ini, atau <a href="#" onclick="navigateTo('master');return false">atur di Data Master →</a>`;
+}
+
 function updateTarifPreview() {
-  const el = document.getElementById('tarif-preview');
-  if (!el) return;
-  const jenis = PJD.form.jenis_perjalanan || 'dalam_kota';
-  const h = getTarifHarian(jenis);
-  el.textContent = h > 0 ? formatRupiah(h) + ' / orang / hari' : 'Tarif belum diisi di Data Master';
-  el.style.color = h > 0 ? 'var(--navy)' : 'var(--red)';
+  const hasOverride = PJD.form.uang_harian_override !== null && PJD.form.uang_harian_override !== undefined && PJD.form.uang_harian_override !== '';
+  if (!hasOverride) {
+    const input = document.getElementById('f-uang-harian');
+    if (input) input.value = getTarifHarian(PJD.form.jenis_perjalanan || 'dalam_kota') || '';
+  }
+  const el = document.getElementById('tarif-preview-hint');
+  if (el) el.innerHTML = tarifHintText(PJD.form);
+}
+
+function resetUangHarian() {
+  PJD.form.uang_harian_override = null;
+  const input = document.getElementById('f-uang-harian');
+  if (input) input.value = getTarifHarian(PJD.form.jenis_perjalanan || 'dalam_kota') || '';
+  updateTarifPreview();
 }
 
 function updateTujuanField() {
