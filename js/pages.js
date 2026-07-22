@@ -12,12 +12,7 @@ PAGES.dashboard = `
   </div>
 </div>
 
-<div class="phases mb-6">
-  <div class="phase-card done"><div class="phase-num">✓</div><div class="phase-title">Phase 1</div><div class="phase-desc">Foundation, Panduan & Template Manager</div></div>
-  <div class="phase-card done"><div class="phase-num">✓</div><div class="phase-title">Phase 2</div><div class="phase-desc">Data Master: Pegawai, Tarif, Kecamatan, SIPD</div></div>
-  <div class="phase-card done"><div class="phase-num">✓</div><div class="phase-title">Phase 3</div><div class="phase-desc">Form Perjalanan Dinas &amp; Kalkulasi Realtime</div></div>
-  <div class="phase-card done"><div class="phase-num">✓</div><div class="phase-title">Phase 4</div><div class="phase-desc">Generate Engine &amp; ZIP Output</div></div>
-</div>
+
 
 <div class="stats-grid mb-6">
   <div class="stat-card navy"><span class="stat-icon">📄</span><div class="stat-value" id="stat-templates">0</div><div class="stat-label">Template Tersimpan</div></div>
