@@ -1,0 +1,132 @@
+diff --git a/js/generate.js b/js/generate.js
+index 2425ac1..92bfa17 100644
+--- a/js/generate.js
++++ b/js/generate.js
+@@ -37,6 +37,7 @@ function calcGrandTotalFull(pjd) {
+ 
+ function buildTujuanText(pjd) {
+   if (pjd.jenis_perjalanan === 'dalam_kota') {
++    if (pjd.nama_tempat) return pjd.nama_tempat;
+     const kec = getKecById(pjd.kecamatan_id);
+     return kec ? 'Kecamatan ' + kec.nama : '—';
+   }
+diff --git a/js/pages.js b/js/pages.js
+index 744bcb2..d4cf361 100644
+--- a/js/pages.js
++++ b/js/pages.js
+@@ -131,7 +131,7 @@ PAGES.panduan = `
+   ['tanggal_kembali','✏️ Manual','manual','Tanggal selesai / kembali dari perjalanan','15 April 2026'],
+   ['alat_angkutan','✏️ Manual','manual','Alat angkutan yang digunakan','Kendaraan Roda 4'],
+   ['tingkat_biaya','⚡ Computed','computed','Tingkat biaya perjalanan dari jenis perjalanan yang dipilih','Dalam Daerah'],
+-  ['tujuan','✏️ Manual','manual','Kecamatan tujuan (dalam daerah) atau alamat lengkap (luar daerah/provinsi)','Kecamatan Tenjolaya'],
++  ['tujuan','✏️ Manual','manual','Kecamatan tujuan (dalam daerah) — bisa dioverride manual pakai nama tempat spesifik (field "Nama Tempat"), atau alamat lengkap (luar daerah/provinsi)','Kantor Kecamatan Kemang / Kecamatan Tenjolaya'],
+   ['tempat_kedudukan','🔄 Auto','auto','Tempat kedudukan / asal keberangkatan (dari unit kerja)','Sukaraja'],
+   ['maksud_perjalanan','✏️ Manual','manual','Maksud perjalanan dinas (untuk SPPD item 4)','Kegiatan Survei Pembuatan Kujang...'],
+   ['dasar','✏️ Manual','manual','Dasar penugasan (untuk Surat Tugas, teks bebas)','Dalam rangka pelaksanaan program kerja...'],
+@@ -143,7 +143,7 @@ PAGES.panduan = `
+   ['lama_perjalanan','⚡ Computed','computed','Lama perjalanan + terbilang<br><span class="text-muted text-sm">tanggal_kembali − tanggal_berangkat + 1</span>','1 (Satu) Hari'],
+   ['hari_tanggal_tugas','⚡ Computed','computed','Rangkaian hari dan tanggal untuk Surat Tugas<br><span class="text-muted text-sm">Nama hari + format tanggal lengkap</span>','hari Rabu, tanggal 15 April 2026'],
+   ['kota_tanggal','⚡ Computed','computed','Baris kota dan tanggal untuk TTD<br><span class="text-muted text-sm">unit_kerja.kota + ", " + tanggal_surat</span>','Cibinong, 01 Oktober 2025'],
+-  ['untuk_pembayaran','⚡ Computed','computed','Teks "Untuk Pembayaran" di kwitansi<br><span class="text-muted text-sm">"Biaya Uang Harian [dan Transport] Perjalanan Dinas [jenis] ke [tujuan]"</span>','Biaya Uang Harian dan Transport Perjalanan Dinas Dalam Daerah ke Kecamatan Dramaga'],
++  ['untuk_pembayaran','⚡ Computed','computed','Teks "Untuk Pembayaran" di kwitansi<br><span class="text-muted text-sm">"Biaya Uang Harian [dan Transport] Perjalanan Dinas [jenis] ke [tujuan]" — [tujuan] ikut nama tempat manual kalau diisi</span>','Biaya Uang Harian dan Transport Perjalanan Dinas Dalam Daerah ke Kantor Kecamatan Kemang'],
+   ['uang_harian','⚡ Computed','computed','Nominal uang harian per peserta<br><span class="text-muted text-sm">tarif_uang_harian[jenis_perjalanan]</span>','Rp 170.000'],
+   ['transport','⚡ Computed','computed','Total transport per peserta (0 jika tidak dapat)<br><span class="text-muted text-sm">nominal_transport × jumlah_kali × lama_perjalanan</span>','Rp 600.000'],
+   ['total','⚡ Computed','computed','Total per peserta (kwitansi)<br><span class="text-muted text-sm">uang_harian + transport</span>','Rp 310.000'],
+diff --git a/js/perjalanan.js b/js/perjalanan.js
+index c9a0818..bbd97fe 100644
+--- a/js/perjalanan.js
++++ b/js/perjalanan.js
+@@ -126,7 +126,7 @@ function renderPJDCard(p) {
+   }).join(', ');
+ 
+   const tujuan = p.jenis_perjalanan === 'dalam_kota'
+-    ? (getKecById(p.kecamatan_id)?.nama ? 'Kec. ' + getKecById(p.kecamatan_id).nama : '—')
++    ? (p.nama_tempat || (getKecById(p.kecamatan_id)?.nama ? 'Kec. ' + getKecById(p.kecamatan_id).nama : '—'))
+     : (p.alamat_tujuan || '—');
+ 
+   const lama   = hitungLama(p.tanggal_berangkat, p.tanggal_kembali);
+@@ -338,7 +338,11 @@ function renderStep1(body) {
+               ? `<select class="form-control" id="f-kecamatan" onchange="PJD.form.kecamatan_id=this.value">
+                   <option value="">— Pilih Kecamatan —</option>
+                   ${kecs.map(k => `<option value="${k.id}" ${f.kecamatan_id===k.id?'selected':''}>${k.nama} ${k.tarif_transport>0?'('+formatRupiah(k.tarif_transport)+')':''}</option>`).join('')}
+-                </select>`
++                </select>
++                <input class="form-control" id="f-nama-tempat" style="margin-top:8px" value="${f.nama_tempat||''}"
++                  placeholder="Nama tempat (opsional): Kantor Kecamatan Kemang"
++                  oninput="PJD.form.nama_tempat=this.value">
++                <div class="form-text">Isi jika ingin nama tempat spesifik muncul di dokumen, bukan cuma nama kecamatan.</div>`
+               : `<input class="form-control" id="f-alamat" value="${f.alamat_tujuan||''}"
+                   placeholder="Alamat lengkap tujuan perjalanan..."
+                   oninput="PJD.form.alamat_tujuan=this.value">`}
+@@ -397,6 +401,7 @@ function updateTarifPreview() {
+ }
+ 
+ function updateTujuanField() {
++  enforceTransportRuleForJenis();
+   const jenis = PJD.form.jenis_perjalanan;
+   const kecs  = DB.getArr('sppd_kecamatan');
+   const label = document.getElementById('tujuan-label');
+@@ -407,7 +412,11 @@ function updateTujuanField() {
+     field.innerHTML = `<select class="form-control" id="f-kecamatan" onchange="PJD.form.kecamatan_id=this.value">
+       <option value="">— Pilih Kecamatan —</option>
+       ${kecs.map(k => `<option value="${k.id}" ${PJD.form.kecamatan_id===k.id?'selected':''}>${k.nama} ${k.tarif_transport>0?'('+formatRupiah(k.tarif_transport)+')':''}</option>`).join('')}
+-    </select>`;
++    </select>
++    <input class="form-control" id="f-nama-tempat" style="margin-top:8px" value="${PJD.form.nama_tempat||''}"
++      placeholder="Nama tempat (opsional): Kantor Kecamatan Kemang"
++      oninput="PJD.form.nama_tempat=this.value">
++    <div class="form-text">Isi jika ingin nama tempat spesifik muncul di dokumen, bukan cuma nama kecamatan.</div>`;
+     PJD.form.alamat_tujuan = '';
+   } else {
+     if (label) label.textContent = 'Alamat Tujuan *';
+@@ -455,7 +464,9 @@ function renderStep2(body) {
+         </div>
+         <div class="alert alert-info">
+           💡 <strong>Transport:</strong> Nominal × Jumlah Kali × ${getLamaPerjalanan() || '?'} Hari<br>
+-          Hanya <strong>satu peserta</strong> yang dapat biaya transport.
++          ${(PJD.form.jenis_perjalanan || 'dalam_kota') === 'dalam_kota'
++            ? 'Hanya <strong>satu peserta</strong> yang dapat biaya transport (dalam kota).'
++            : 'Untuk luar daerah/provinsi, <strong>setiap peserta</strong> boleh diisi transport masing-masing.'}
+         </div>
+       </div>
+     </div>`;
+@@ -559,12 +570,27 @@ function togglePeserta(pegawaiId) {
+   updateCalcPanel();
+ }
+ 
++// Kalau jenis perjalanan diganti balik ke dalam_kota, dan sebelumnya (waktu masih
++// luar_kota/luar_provinsi) lebih dari 1 peserta sudah dicentang dapat transport,
++// sisain cuma peserta pertama biar sesuai aturan "1 peserta" untuk dalam kota.
++function enforceTransportRuleForJenis() {
++  const isDalamKota = (PJD.form.jenis_perjalanan || 'dalam_kota') === 'dalam_kota';
++  if (!isDalamKota) return;
++  const withTransport = PJD.form.peserta.filter(p => p.dapat_transport);
++  if (withTransport.length > 1) {
++    withTransport.slice(1).forEach(p => { p.dapat_transport = false; });
++    toast('Jenis perjalanan diubah ke dalam kota: transport disisakan untuk 1 peserta saja', 'warning');
++  }
++}
++
+ function toggleTransport(pegawaiId, checked) {
+-  // Only one peserta can have transport
+-  if (checked) {
++  // Hanya dibatasi 1 peserta untuk perjalanan dalam kota (asumsi 1 kendaraan dinas).
++  // Luar daerah/provinsi: tiap peserta boleh dapat transport sendiri-sendiri (tiket masing-masing).
++  const isDalamKota = (PJD.form.jenis_perjalanan || 'dalam_kota') === 'dalam_kota';
++  if (checked && isDalamKota) {
+     const already = PJD.form.peserta.find(p => p.dapat_transport && p.pegawai_id !== pegawaiId);
+     if (already) {
+-      toast('Hanya satu peserta yang dapat biaya transport', 'warning');
++      toast('Hanya satu peserta yang dapat biaya transport untuk perjalanan dalam kota', 'warning');
+       document.getElementById('ptrans-chk-' + pegawaiId).checked = false;
+       return;
+     }
+@@ -707,7 +733,7 @@ function renderStep4(body) {
+   const f      = PJD.form;
+   const lama   = getLamaPerjalanan();
+   const tujuan = f.jenis_perjalanan === 'dalam_kota'
+-    ? (getKecById(f.kecamatan_id)?.nama ? 'Kecamatan ' + getKecById(f.kecamatan_id).nama : '—')
++    ? (f.nama_tempat || (getKecById(f.kecamatan_id)?.nama ? 'Kecamatan ' + getKecById(f.kecamatan_id).nama : '—'))
+     : (f.alamat_tujuan || '—');
+ 
+   const sipdText = (() => {
