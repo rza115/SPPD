@@ -191,8 +191,76 @@ PAGES.panduan = `
   ['nama_peserta_1','⚡ Computed','computed','Nama peserta urutan ke-1 (golongan tertinggi)','Romadhoni S Subekti...'],
   ['nip_gol_peserta_1','⚡ Computed','computed','NIP / Golongan peserta ke-1 (format SPPD)','197808172005011016 / IV-a'],
   ['jabatan_peserta_1','⚡ Computed','computed','Jabatan peserta ke-1 (kosong jika belum diisi di database)','Plt. Kepala Sub Bagian Umum'],
-]) + `
-<div class="card" style="border-left:4px solid var(--navy)">
+]) + argSection('🔁','#EDE7F6','Loop Lampiran — Daftar Peserta Dinamis','Untuk tabel Lampiran Surat Tugas yang jumlah barisnya ikut jumlah peserta — tidak perlu bikin slot _1 _2 _3 manual. Tersedia di jalur Generate Dokumen maupun Surat Tugas AI.',
+[
+  ['#peserta_lampiran','🔁 Loop','loop','Tag <strong>pembuka</strong> loop — taruh di sel pertama baris tabel yang mau diulang','—'],
+  ['no','🔁 Loop','loop','Nomor urut baris — diisi otomatis 1, 2, 3...','1'],
+  ['nama','🔁 Loop','loop','Nama lengkap peserta di baris ini','Romadhoni S Subekti, S.St. Par., M.M. Par.'],
+  ['nip','🔁 Loop','loop','NIP peserta di baris ini — NIP polos, tanpa golongan','197808172005011016'],
+  ['jabatan','🔁 Loop','loop','Jabatan peserta di baris ini','Plt. Kepala Sub Bagian Umum'],
+  ['/peserta_lampiran','🔁 Loop','loop','Tag <strong>penutup</strong> loop — taruh di sel terakhir baris yang sama','—'],
+],
+`<div class="alert alert-info">
+  <div style="margin-bottom:8px"><strong>💡 Cara pakai di Word:</strong> buat tabel dengan <strong>satu baris data saja</strong>, lalu isi selnya seperti ini. Saat generate, baris itu digandakan sebanyak jumlah peserta.</div>
+  <div style="background:#fff;border:1px solid var(--border);border-radius:6px;overflow:hidden;margin-bottom:8px">
+    <table style="width:100%;border-collapse:collapse;font-size:12px">
+      <thead><tr style="background:#f0f3f9">
+        <th style="padding:6px 10px;text-align:left;width:60px">No</th>
+        <th style="padding:6px 10px;text-align:left">Nama</th>
+        <th style="padding:6px 10px;text-align:left">NIP</th>
+        <th style="padding:6px 10px;text-align:left">Jabatan</th>
+      </tr></thead>
+      <tbody><tr>
+        <td style="padding:6px 10px" class="font-mono">{{#peserta_lampiran}}{{no}}</td>
+        <td style="padding:6px 10px" class="font-mono">{{nama}}</td>
+        <td style="padding:6px 10px" class="font-mono">{{nip}}</td>
+        <td style="padding:6px 10px" class="font-mono">{{jabatan}}{{/peserta_lampiran}}</td>
+      </tr></tbody>
+    </table>
+  </div>
+  <div style="font-size:12px">⚠️ <strong>{{nip}}</strong> di dalam loop ini adalah NIP polos per baris — beda dari <strong>{{nip_gol_peserta_1}}</strong> (NIP / golongan, bernomor) dan <strong>{{nip_kepala}}</strong> / <strong>{{nip_pptk}}</strong> (NIP penandatangan). Peserta diurutkan golongan tertinggi ke terendah.</div>
+</div>`
+) + `
+<div class="arg-section">
+  <div class="arg-section-header">
+    <div class="arg-section-icon" style="background:#FFF8E1">🕒</div>
+    <div>
+      <div class="arg-section-title">Cara Pakai — Jam Kegiatan (baris "Pukul :")</div>
+      <div class="arg-section-desc">Field opsional. Kosongkan kalau surat tidak perlu mencantumkan jam — placeholder-nya akan ikut kosong, tidak menampilkan tulisan aneh.</div>
+    </div>
+  </div>
+  <div class="card"><div class="card-body">
+    <div style="font-size:13px;color:var(--text-2);line-height:1.7">
+      <div style="margin-bottom:12px"><strong>1. Isi di form.</strong> Ada dua jalur generate, dan keduanya punya field jam:</div>
+      <div style="padding-left:16px;margin-bottom:14px">
+        <div style="margin-bottom:6px">• <strong>Perjalanan Dinas</strong> → Step 1 "Data Perjalanan Dinas" → di bawah Tanggal Berangkat/Kembali.</div>
+        <div>• <strong>Surat Tugas AI</strong> → tab AI atau Manual → card "Data Surat &amp; Generate", di bawah Nomor/Tanggal Surat.</div>
+      </div>
+      <div style="margin-bottom:10px"><strong>2. Pilih placeholder di template.</strong> Sistem otomatis mengubah format <code style="background:#f0f3f9;padding:1px 5px;border-radius:3px">08:00</code> (input jam) menjadi <code style="background:#f0f3f9;padding:1px 5px;border-radius:3px">08.00</code> (gaya surat dinas — pakai titik):</div>
+      <div style="background:#fff;border:1px solid var(--border);border-radius:6px;overflow:hidden;margin-bottom:14px">
+        <table style="width:100%;border-collapse:collapse;font-size:12px">
+          <thead><tr style="background:#f0f3f9">
+            <th style="padding:6px 10px;text-align:left">Ditulis di template</th>
+            <th style="padding:6px 10px;text-align:left">Hasil di dokumen</th>
+          </tr></thead>
+          <tbody>
+            <tr><td style="padding:6px 10px" class="font-mono">Pukul : {{jam}}</td><td style="padding:6px 10px">Pukul : 08.00 s.d. 16.00</td></tr>
+            <tr><td style="padding:6px 10px" class="font-mono">Pukul : {{jam_mulai}} WIB</td><td style="padding:6px 10px">Pukul : 08.00 WIB</td></tr>
+            <tr><td style="padding:6px 10px" class="font-mono">{{jam_mulai}} – {{jam_selesai}}</td><td style="padding:6px 10px">08.00 – 16.00</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div style="margin-bottom:6px"><strong>3. Perilaku <code style="background:#f0f3f9;padding:1px 5px;border-radius:3px">{{jam}}</code> saat data tidak lengkap:</strong></div>
+      <div style="padding-left:16px">
+        <div style="margin-bottom:4px">• Dua-duanya diisi → <strong>08.00 s.d. 16.00</strong></div>
+        <div style="margin-bottom:4px">• Hanya jam mulai → <strong>08.00</strong> (tanpa "s.d.")</div>
+        <div>• Dua-duanya kosong → <strong>kosong</strong>, baris "Pukul :" di template tetap muncul tapi tanpa isi. Hapus manual barisnya kalau memang tidak dipakai.</div>
+      </div>
+    </div>
+  </div></div>
+</div>
+`
++ `<div class="card" style="border-left:4px solid var(--navy)">
   <div class="card-body">
     <h3 style="margin-bottom:14px;font-size:14px">📌 Catatan Penting Penggunaan Template</h3>
     <div style="display:flex;flex-direction:column;gap:10px;font-size:13px;color:var(--text-2)">
@@ -202,6 +270,8 @@ PAGES.panduan = `
       <div>4. <code style="background:#f0f3f9;padding:1px 5px;border-radius:3px">{{nomor}}</code> dan <code style="background:#f0f3f9;padding:1px 5px;border-radius:3px">{{nomor_sppd}}</code> mengambil nilai yang sama — nomor surat yang diinput saat membuat perjalanan dinas.</div>
       <div>5. <code style="background:#f0f3f9;padding:1px 5px;border-radius:3px">{{kode_rekening_sipd}}</code> merujuk kode anggaran di SIPD, <strong>bukan</strong> nomor rekening bank. Untuk rekening bank pegawai gunakan <code style="background:#f0f3f9;padding:1px 5px;border-radius:3px">{{nomor_rekening}}</code>.</div>
       <div>6. Untuk tabel peserta yang jumlahnya bervariasi, gunakan <code style="background:#f0f3f9;padding:1px 5px;border-radius:3px">{{peserta_table}}</code> agar tabel menyesuaikan otomatis.</div>
+      <div>7. Untuk <strong>Lampiran Surat Tugas</strong>, pakai loop <code style="background:#f0f3f9;padding:1px 5px;border-radius:3px">{{#peserta_lampiran}}</code> … <code style="background:#f0f3f9;padding:1px 5px;border-radius:3px">{{/peserta_lampiran}}</code> — jumlah baris tabel menyesuaikan peserta secara otomatis. Di dalam loop, panggil NIP dengan <code style="background:#f0f3f9;padding:1px 5px;border-radius:3px">{{nip}}</code> saja (bukan <code style="background:#f0f3f9;padding:1px 5px;border-radius:3px">{{nip_gol_peserta_1}}</code>).</div>
+      <div>8. Field <strong>Jam Mulai</strong> dan <strong>Jam Selesai</strong> sifatnya opsional dan tidak diwajibkan saat simpan form — aman dikosongkan kalau surat tidak mencantumkan jam.</div>
     </div>
   </div>
 </div>`;
