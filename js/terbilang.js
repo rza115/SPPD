@@ -93,6 +93,15 @@ function namaHari(dateStr) {
 }
 
 /**
+ * Format jam gaya surat dinas: input <input type="time"> "08:30" → "08.30"
+ * (dokumen resmi Indonesia pakai titik, bukan titik dua). Kosong → ''.
+ */
+function formatJam(hhmm) {
+  if (!hhmm) return '';
+  return String(hhmm).trim().replace(':', '.');
+}
+
+/**
  * Hitung lama perjalanan (hari)
  */
 function hitungLama(tglBerangkat, tglKembali) {

@@ -57,6 +57,13 @@ function buildBaseArgs(pjd) {
   const grand  = calcGrandTotalFull(pjd);
   const kodeRek= sipd ? sipd.kode : (pjd.kode_sipd_manual || '');
 
+  // Jam mulai/selesai — opsional, dipakai template di baris "Pukul :".
+  const jamMulai   = formatJam(pjd.jam_mulai);
+  const jamSelesai = formatJam(pjd.jam_selesai);
+  const jamGabung  = jamMulai && jamSelesai
+    ? `${jamMulai} s.d. ${jamSelesai}`
+    : (jamMulai || '');
+
   // Build peserta_table text (indexed args for SPPD/Surat Tugas)
   const pesertaIndexed = {};
   const sorted = sortedPeserta(pjd);
@@ -80,7 +87,7 @@ function buildBaseArgs(pjd) {
   // bukan default { } bawaan docxtemplater.
   const pesertaLampiran = sorted.map((ps, i) => {
     const pgw = getPegawaiById(ps.pegawai_id);
-    return { no: i + 1, nama: pgw?.nama_lengkap || '', jabatan: pgw?.jabatan || '' };
+    return { no: i + 1, nama: pgw?.nama_lengkap || '', jabatan: pgw?.jabatan || '', nip: pgw?.nip || '' };
   });
 
   // Build per-N rekap args
@@ -120,6 +127,9 @@ function buildBaseArgs(pjd) {
     dasar              : pjd.dasar || '',
     deskripsi_tugas    : pjd.deskripsi_tugas || '',
     hari_tanggal_tugas : formatHariTanggalTugas(pjd.tanggal_berangkat, pjd.tanggal_kembali),
+    jam_mulai          : jamMulai,
+    jam_selesai        : jamSelesai,
+    jam                : jamGabung,
 
     // ── Tanggal computed ────────────────────────────────
     kota_tanggal       : (uk.kota || '') + ', ' + formatTanggal(pjd.tanggal_surat),

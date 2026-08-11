@@ -20,6 +20,8 @@ const STAI = {
     tanggal_surat    : '',
     tanggal_mulai    : '',
     tanggal_selesai  : '',
+    jam_mulai        : '',
+    jam_selesai      : '',
     keperluan        : '',
     tujuan_instansi  : '',
     peserta_ids      : [],   // array of pegawai id
@@ -276,6 +278,21 @@ function staiBottomFormHTML(f) {
             <input type="date" class="form-control" id="stai-tgl-surat"
               value="${f.tanggal_surat||f.tanggal_mulai||''}"
               onchange="STAI.form.tanggal_surat=this.value">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Jam Mulai <span class="text-muted">(opsional)</span></label>
+            <input type="time" class="form-control" id="stai-jam-mulai"
+              value="${f.jam_mulai||''}"
+              oninput="STAI.form.jam_mulai=this.value" onchange="STAI.form.jam_mulai=this.value">
+            <div class="form-text">Mengisi placeholder {{jam_mulai}} / {{jam}} di baris "Pukul :"</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Jam Selesai <span class="text-muted">(opsional)</span></label>
+            <input type="time" class="form-control" id="stai-jam-selesai"
+              value="${f.jam_selesai||''}"
+              oninput="STAI.form.jam_selesai=this.value" onchange="STAI.form.jam_selesai=this.value">
           </div>
         </div>
         <div class="form-group">
@@ -592,6 +609,7 @@ function staiBuildArgs() {
     no      : i + 1,
     nama    : p.nama_lengkap || '',
     jabatan : p.jabatan      || '',
+    nip     : p.nip          || '',
   }));
 
   // ── Tanggal helpers ───────────────────────────────────────
@@ -599,6 +617,13 @@ function staiBuildArgs() {
   const tglMulai   = f.tanggal_mulai   || '';
   const tglSelesai = f.tanggal_selesai || tglMulai;
   const lama       = tglMulai ? hitungLama(tglMulai, tglSelesai) : 0;
+
+  // ── Jam mulai/selesai (opsional) — baris "Pukul :" ────────
+  const jamMulai   = formatJam(f.jam_mulai);
+  const jamSelesai = formatJam(f.jam_selesai);
+  const jamGabung  = jamMulai && jamSelesai
+    ? `${jamMulai} s.d. ${jamSelesai}`
+    : (jamMulai || '');
 
   // ── kota_tanggal: ikut kota unit kerja (sesuai panduan) ──
   const kotaTanggal = uk.kota
@@ -621,6 +646,9 @@ function staiBuildArgs() {
       ? formatHariTanggalTugas(tglMulai, tglSelesai)
       : '',
     kota_tanggal       : kotaTanggal,
+    jam_mulai          : jamMulai,
+    jam_selesai        : jamSelesai,
+    jam                : jamGabung,
 
     // ─── Data Unit Kerja & Instansi ───────────────────────
     nama_dinas         : uk.nama              || '',

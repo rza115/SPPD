@@ -16,6 +16,7 @@ const PJD = {
     this.form = {
       nomor_surat: '', kode_no: '', tanggal_surat: '',
       tanggal_berangkat: '', tanggal_kembali: '',
+      jam_mulai: '', jam_selesai: '',
       jenis_perjalanan: 'dalam_kota', uang_harian_override: null,
       kecamatan_id: '', alamat_tujuan: '', kota_tujuan_id: '',
       alat_angkutan: 'Kendaraan Roda 4',
@@ -401,6 +402,20 @@ function renderStep1(body) {
 
         <div id="lama-preview" style="display:none" class="alert alert-success" style="margin-bottom:14px">
           📅 <span id="lama-text"></span>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Jam Mulai <span class="text-muted">(opsional)</span></label>
+            <input type="time" class="form-control" id="f-jammulai" value="${f.jam_mulai||''}"
+              oninput="PJD.form.jam_mulai=this.value" onchange="PJD.form.jam_mulai=this.value">
+            <div class="form-text">Mengisi placeholder {{jam_mulai}} / {{jam}} di baris "Pukul :"</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Jam Selesai <span class="text-muted">(opsional)</span></label>
+            <input type="time" class="form-control" id="f-jamselesai" value="${f.jam_selesai||''}"
+              oninput="PJD.form.jam_selesai=this.value" onchange="PJD.form.jam_selesai=this.value">
+          </div>
         </div>
 
         <div class="form-row">
