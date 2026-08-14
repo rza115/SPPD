@@ -3,6 +3,9 @@
  * docxtemplater + PizZip + JSZip
  */
 
+// ─── STATE ────────────────────────────────────────────────
+const GEN_UI = { search: '', pjdId: '' };
+
 // ─── HELPERS ──────────────────────────────────────────────
 function getFirstUK() {
   return DB.getArr('sppd_unit_kerja')[0] || {};
@@ -529,14 +532,6 @@ function renderGeneratePage() {
     return;
   }
 
-  const pjdOptions = pjdList.map(p => {
-    const lama   = hitungLama(p.tanggal_berangkat, p.tanggal_kembali);
-    const tujuan = buildTujuanText(p);
-    const label  = `${p.nomor_surat || '—'} · ${formatTanggal(p.tanggal_berangkat)} · ${tujuan} (${p.peserta?.length||0} orang)`;
-    const icon   = p.status === 'final' ? '✅' : '📝';
-    return `<option value="${p.id}">${icon} ${label}</option>`;
-  }).join('');
-
   const genHistory = DB.getArr(KEYS.generated).slice(0, 5);
 
   c.innerHTML = `
@@ -547,11 +542,15 @@ function renderGeneratePage() {
         <div><h3>Pilih Perjalanan Dinas</h3><p>Pilih perjalanan yang akan digenerate dokumennya</p></div>
       </div>
       <div class="card-body">
-        <div class="form-group" style="margin-bottom:0">
-          <select class="form-control" id="gen-pjd-select" onchange="onSelectPJD(this.value)" style="font-size:13px">
-            <option value="">— Pilih Perjalanan Dinas —</option>
-            ${pjdOptions}
-          </select>
+        <div class="form-group" style="margin-bottom:0;position:relative" id="gen-pjd-search-wrap">
+          <input type="text" class="form-control search-bar" id="gen-pjd-search" 
+            placeholder="🔍 Ketik nomor surat, tujuan, atau nama peserta..."
+            autocomplete="off"
+            onfocus="renderGenPJDDropdown()"
+            oninput="onGenPJDSearchInput(this.value)"
+            style="font-size:13px">
+          <input type="hidden" id="gen-pjd-select">
+          <div id="gen-pjd-dropdown" style="display:none;position:absolute;z-index:100;background:white;border:2px solid var(--navy);border-radius:var(--radius);box-shadow:0 4px 12px rgba(0,0,0,0.15);max-height:400px;overflow-y:auto;width:100%;margin-top:4px"></div>
         </div>
       </div>
     </div>
@@ -606,6 +605,85 @@ function renderGeneratePage() {
         </tbody>
       </table></div>
     </div>` : ''}`;
+
+  // Restore state
+  const searchInput = document.getElementById('gen-pjd-search');
+  if (searchInput && GEN_UI.search) {
+    searchInput.value = GEN_UI.search;
+  }
+  if (GEN_UI.pjdId && pjdList.find(p => p.id === GEN_UI.pjdId)) {
+    selectGenPJD(GEN_UI.pjdId);
+  }
+}
+
+// ─── SEARCH & FILTER ──────────────────────────────────────
+function filterGenPJDList(list, search) {
+  if (!search) return list;
+  const q = search.toLowerCase();
+  return list.filter(pjd => {
+    if ((pjd.nomor_surat || '').toLowerCase().includes(q)) return true;
+    if ((pjd.kode_no || '').toLowerCase().includes(q)) return true;
+    const tujuan = buildTujuanText(pjd).toLowerCase();
+    if (tujuan.includes(q)) return true;
+    const pesertaNames = (pjd.peserta || []).map(ps => {
+      const pgw = getPegawaiById(ps.pegawai_id);
+      return (pgw?.nama_lengkap || '').toLowerCase();
+    }).join(' ');
+    if (pesertaNames.includes(q)) return true;
+    return false;
+  });
+}
+
+function renderGenPJDDropdown() {
+  const dropdown = document.getElementById('gen-pjd-dropdown');
+  if (!dropdown) return;
+
+  const pjdList = getPJDList().sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  const filtered = filterGenPJDList(pjdList, GEN_UI.search).slice(0, 50);
+
+  if (filtered.length === 0) {
+    dropdown.innerHTML = '<div style="padding:14px;text-align:center;color:var(--text-3)">Tidak ada hasil</div>';
+  } else {
+    dropdown.innerHTML = filtered.map(p => {
+      const tujuan = buildTujuanText(p);
+      const icon = p.status === 'final' ? '✅' : '📝';
+      const label = `${p.nomor_surat || '—'} · ${formatTanggal(p.tanggal_berangkat)} · ${tujuan} (${p.peserta?.length || 0} orang)`;
+      return `<div onmousedown="selectGenPJD('${p.id}')" style="padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--border);font-size:13px;transition:var(--transition)" onmouseover="this.style.background='var(--surface-2)'" onmouseout="this.style.background=''">
+        ${icon} ${label}
+      </div>`;
+    }).join('');
+  }
+
+  dropdown.style.display = 'block';
+}
+
+function onGenPJDSearchInput(value) {
+  GEN_UI.search = value;
+  GEN_UI.pjdId = '';
+  const hiddenInput = document.getElementById('gen-pjd-select');
+  if (hiddenInput) hiddenInput.value = '';
+  onSelectPJD('');
+  renderGenPJDDropdown();
+}
+
+function selectGenPJD(id) {
+  const pjd = getPJDList().find(x => x.id === id);
+  if (!pjd) return;
+
+  GEN_UI.pjdId = id;
+  const tujuan = buildTujuanText(pjd);
+  const icon = pjd.status === 'final' ? '✅' : '📝';
+  GEN_UI.search = `${icon} ${pjd.nomor_surat || '—'} · ${formatTanggal(pjd.tanggal_berangkat)} · ${tujuan} (${pjd.peserta?.length || 0} orang)`;
+
+  const searchInput = document.getElementById('gen-pjd-search');
+  const hiddenInput = document.getElementById('gen-pjd-select');
+  const dropdown = document.getElementById('gen-pjd-dropdown');
+
+  if (searchInput) searchInput.value = GEN_UI.search;
+  if (hiddenInput) hiddenInput.value = id;
+  if (dropdown) dropdown.style.display = 'none';
+
+  onSelectPJD(id);
 }
 
 function renderTemplateSelector() {
@@ -770,3 +848,12 @@ function triggerGenerate() {
 
   runGenerate(pjdId, selections);
 }
+
+// ─── GLOBAL EVENT LISTENER ────────────────────────────────
+document.addEventListener('click', (e) => {
+  const wrap = document.getElementById('gen-pjd-search-wrap');
+  const dropdown = document.getElementById('gen-pjd-dropdown');
+  if (wrap && dropdown && !wrap.contains(e.target)) {
+    dropdown.style.display = 'none';
+  }
+});

@@ -1,0 +1,148 @@
+diff --git a/js/generate.js b/js/generate.js
+index ffaac31..8c3d1e2 100644
+--- a/js/generate.js
++++ b/js/generate.js
+@@ -1,8 +1,13 @@
+ /**
+  * generate.js — Phase 4: Generate Engine & ZIP Output
+  * docxtemplater + PizZip + JSZip
+  */
+ 
++// State UI buat search box "Pilih Perjalanan Dinas" di halaman Generate —
++// simpan teks pencarian & id perjalanan terpilih supaya nggak reset kalau
++// renderGeneratePage() dipanggil ulang (mis. habis generate selesai).
++const GEN_UI = { search: '', pjdId: '' };
++
+ // ─── HELPERS ──────────────────────────────────────────────
+ function getFirstUK() {
+   return DB.getArr('sppd_unit_kerja')[0] || {};
+@@ -420,26 +425,29 @@ function renderGeneratePage() {
+     return;
+   }
+ 
+-  const pjdOptions = pjdList.map(p => {
+-    const lama   = hitungLama(p.tanggal_berangkat, p.tanggal_kembali);
+-    const tujuan = buildTujuanText(p);
+-    const label  = `${p.nomor_surat || '—'} · ${formatTanggal(p.tanggal_berangkat)} · ${tujuan} (${p.peserta?.length||0} orang)`;
+-    const icon   = p.status === 'final' ? '✅' : '📝';
+-    return `<option value="${p.id}">${icon} ${label}</option>`;
+-  }).join('');
+-
+   const genHistory = DB.getArr(KEYS.generated).slice(0, 5);
+ 
+   c.innerHTML = `
+     <!-- Select Perjalanan -->
+     <div class="card mb-6">
+       <div class="card-header">
+         <div class="card-icon" style="background:#EBF3FD">✈️</div>
+-        <div><h3>Pilih Perjalanan Dinas</h3><p>Pilih perjalanan yang akan digenerate dokumennya</p></div>
++        <div><h3>Pilih Perjalanan Dinas</h3><p>Cari nomor surat, tujuan, atau nama peserta</p></div>
+       </div>
+       <div class="card-body">
+-        <div class="form-group" style="margin-bottom:0">
+-          <select class="form-control" id="gen-pjd-select" onchange="onSelectPJD(this.value)" style="font-size:13px">
+-            <option value="">— Pilih Perjalanan Dinas —</option>
+-            ${pjdOptions}
+-          </select>
++        <div id="gen-pjd-search-wrap" style="position:relative">
++          <div class="search-bar" style="width:100%">
++            <span>🔍</span>
++            <input type="text" class="form-control" id="gen-pjd-search"
++              placeholder="Cari nomor surat, tujuan, atau nama peserta..."
++              value="${GEN_UI.search || ''}"
++              oninput="onGenPJDSearchInput(this.value)"
++              onfocus="renderGenPJDDropdown()"
++              autocomplete="off">
++          </div>
++          <input type="hidden" id="gen-pjd-select" value="${GEN_UI.pjdId || ''}">
++          <div id="gen-pjd-dropdown"
++            style="display:none;position:absolute;top:100%;left:0;right:0;z-index:20;background:#fff;border:1px solid var(--border);border-radius:var(--radius);margin-top:4px;max-height:320px;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,.12)"></div>
+         </div>
+       </div>
+     </div>
+@@ -507,8 +515,74 @@ function renderGeneratePage() {
+     </div>` : ''}`;
++
++  // Restore teks pencarian & seleksi sebelumnya (kalau ada) setelah render ulang
++  const searchInputEl = document.getElementById('gen-pjd-search');
++  if (searchInputEl) searchInputEl.value = GEN_UI.search || '';
++  if (GEN_UI.pjdId && pjdList.some(p => p.id === GEN_UI.pjdId)) {
++    onSelectPJD(GEN_UI.pjdId);
++  }
+ }
+ 
++// ─── SEARCHABLE DROPDOWN "Pilih Perjalanan Dinas" ─────────
++function filterGenPJDList(list, search) {
++  if (!search || !search.trim()) return list;
++  const q = search.trim().toLowerCase();
++  return list.filter(p => {
++    const tujuan = buildTujuanText(p);
++    const pesertaNames = (p.peserta || []).map(ps => getPegawaiById(ps.pegawai_id)?.nama_lengkap || '').join(' ');
++    const haystack = [p.nomor_surat, p.kode_no, tujuan, pesertaNames].filter(Boolean).join(' ').toLowerCase();
++    return haystack.includes(q);
++  });
++}
++
++function renderGenPJDDropdown() {
++  const dd = document.getElementById('gen-pjd-dropdown');
++  if (!dd) return;
++  const pjdList  = getPJDList().sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
++  const filtered = filterGenPJDList(pjdList, GEN_UI.search).slice(0, 50);
++
++  if (filtered.length === 0) {
++    dd.innerHTML = `<div style="padding:14px;font-size:13px;color:var(--text-3)">Tidak ada perjalanan yang cocok</div>`;
++    dd.style.display = '';
++    return;
++  }
++
++  dd.innerHTML = filtered.map(p => {
++    const tujuan = buildTujuanText(p);
++    const icon   = p.status === 'final' ? '✅' : '📝';
++    return `
++      <div style="padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--border)"
++        onmousedown="selectGenPJD('${p.id}')"
++        onmouseover="this.style.background='var(--surface-2)'" onmouseout="this.style.background=''">
++        <div style="font-weight:700;font-size:13px">${icon} ${p.nomor_surat || '—'}</div>
++        <div class="text-muted text-sm">${formatTanggal(p.tanggal_berangkat)} · ${tujuan} · ${p.peserta?.length||0} orang</div>
++      </div>`;
++  }).join('');
++  dd.style.display = '';
++}
++
++function onGenPJDSearchInput(value) {
++  GEN_UI.search = value;
++  GEN_UI.pjdId  = '';
++  const hidden = document.getElementById('gen-pjd-select');
++  if (hidden) hidden.value = '';
++  onSelectPJD('');
++  renderGenPJDDropdown();
++}
++
++function selectGenPJD(id) {
++  const pjd = getPJDList().find(x => x.id === id);
++  GEN_UI.pjdId  = id;
++  GEN_UI.search = pjd ? `${pjd.nomor_surat || '—'} · ${formatTanggal(pjd.tanggal_berangkat)} · ${buildTujuanText(pjd)}` : '';
++
++  const searchInputEl = document.getElementById('gen-pjd-search');
++  if (searchInputEl) searchInputEl.value = GEN_UI.search;
++  const hidden = document.getElementById('gen-pjd-select');
++  if (hidden) hidden.value = id;
++  const dd = document.getElementById('gen-pjd-dropdown');
++  if (dd) dd.style.display = 'none';
++
++  onSelectPJD(id);
++}
++
++// Tutup dropdown kalau klik di luar search box — dipasang sekali di level
++// module (bukan di dalam renderGeneratePage) supaya listener nggak numpuk
++// tiap kali halaman Generate dibuka ulang.
++document.addEventListener('click', (e) => {
++  const wrap = document.getElementById('gen-pjd-search-wrap');
++  if (!wrap) return;
++  if (!wrap.contains(e.target)) {
++    const dd = document.getElementById('gen-pjd-dropdown');
++    if (dd) dd.style.display = 'none';
++  }
++});
++
+ function renderTemplateSelector() {
