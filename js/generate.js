@@ -3,7 +3,9 @@
  * docxtemplater + PizZip + JSZip
  */
 
-// ─── STATE ────────────────────────────────────────────────
+// State UI buat search box "Pilih Perjalanan Dinas" di halaman Generate —
+// simpan teks pencarian & id perjalanan terpilih supaya nggak reset kalau
+// renderGeneratePage() dipanggil ulang (mis. habis generate selesai).
 const GEN_UI = { search: '', pjdId: '' };
 
 // ─── HELPERS ──────────────────────────────────────────────
@@ -539,18 +541,22 @@ function renderGeneratePage() {
     <div class="card mb-6">
       <div class="card-header">
         <div class="card-icon" style="background:#EBF3FD">✈️</div>
-        <div><h3>Pilih Perjalanan Dinas</h3><p>Pilih perjalanan yang akan digenerate dokumennya</p></div>
+        <div><h3>Pilih Perjalanan Dinas</h3><p>Cari nomor surat, tujuan, atau nama peserta</p></div>
       </div>
       <div class="card-body">
-        <div class="form-group" style="margin-bottom:0;position:relative" id="gen-pjd-search-wrap">
-          <input type="text" class="form-control search-bar" id="gen-pjd-search" 
-            placeholder="🔍 Ketik nomor surat, tujuan, atau nama peserta..."
-            autocomplete="off"
-            onfocus="renderGenPJDDropdown()"
-            oninput="onGenPJDSearchInput(this.value)"
-            style="font-size:13px">
-          <input type="hidden" id="gen-pjd-select">
-          <div id="gen-pjd-dropdown" style="display:none;position:absolute;z-index:100;background:white;border:2px solid var(--navy);border-radius:var(--radius);box-shadow:0 4px 12px rgba(0,0,0,0.15);max-height:400px;overflow-y:auto;width:100%;margin-top:4px"></div>
+        <div id="gen-pjd-search-wrap" style="position:relative">
+          <div class="search-bar" style="width:100%">
+            <span>🔍</span>
+            <input type="text" class="form-control" id="gen-pjd-search"
+              placeholder="Cari nomor surat, tujuan, atau nama peserta..."
+              value="${GEN_UI.search || ''}"
+              oninput="onGenPJDSearchInput(this.value)"
+              onfocus="renderGenPJDDropdown()"
+              autocomplete="off">
+          </div>
+          <input type="hidden" id="gen-pjd-select" value="${GEN_UI.pjdId || ''}">
+          <div id="gen-pjd-dropdown"
+            style="display:none;position:absolute;top:100%;left:0;right:0;z-index:20;background:#fff;border:1px solid var(--border);border-radius:var(--radius);margin-top:4px;max-height:320px;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,.12)"></div>
         </div>
       </div>
     </div>
@@ -606,85 +612,87 @@ function renderGeneratePage() {
       </table></div>
     </div>` : ''}`;
 
-  // Restore state
-  const searchInput = document.getElementById('gen-pjd-search');
-  if (searchInput && GEN_UI.search) {
-    searchInput.value = GEN_UI.search;
-  }
-  if (GEN_UI.pjdId && pjdList.find(p => p.id === GEN_UI.pjdId)) {
-    selectGenPJD(GEN_UI.pjdId);
+  // Restore teks pencarian & seleksi sebelumnya (kalau ada) setelah render ulang
+  const searchInputEl = document.getElementById('gen-pjd-search');
+  if (searchInputEl) searchInputEl.value = GEN_UI.search || '';
+  if (GEN_UI.pjdId && pjdList.some(p => p.id === GEN_UI.pjdId)) {
+    onSelectPJD(GEN_UI.pjdId);
   }
 }
 
-// ─── SEARCH & FILTER ──────────────────────────────────────
+// ─── SEARCHABLE DROPDOWN "Pilih Perjalanan Dinas" ─────────
 function filterGenPJDList(list, search) {
-  if (!search) return list;
-  const q = search.toLowerCase();
-  return list.filter(pjd => {
-    if ((pjd.nomor_surat || '').toLowerCase().includes(q)) return true;
-    if ((pjd.kode_no || '').toLowerCase().includes(q)) return true;
-    const tujuan = buildTujuanText(pjd).toLowerCase();
-    if (tujuan.includes(q)) return true;
-    const pesertaNames = (pjd.peserta || []).map(ps => {
-      const pgw = getPegawaiById(ps.pegawai_id);
-      return (pgw?.nama_lengkap || '').toLowerCase();
-    }).join(' ');
-    if (pesertaNames.includes(q)) return true;
-    return false;
+  if (!search || !search.trim()) return list;
+  const q = search.trim().toLowerCase();
+  return list.filter(p => {
+    const tujuan = buildTujuanText(p);
+    const pesertaNames = (p.peserta || []).map(ps => getPegawaiById(ps.pegawai_id)?.nama_lengkap || '').join(' ');
+    const haystack = [p.nomor_surat, p.kode_no, tujuan, pesertaNames].filter(Boolean).join(' ').toLowerCase();
+    return haystack.includes(q);
   });
 }
 
 function renderGenPJDDropdown() {
-  const dropdown = document.getElementById('gen-pjd-dropdown');
-  if (!dropdown) return;
-
-  const pjdList = getPJDList().sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  const dd = document.getElementById('gen-pjd-dropdown');
+  if (!dd) return;
+  const pjdList  = getPJDList().sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
   const filtered = filterGenPJDList(pjdList, GEN_UI.search).slice(0, 50);
 
   if (filtered.length === 0) {
-    dropdown.innerHTML = '<div style="padding:14px;text-align:center;color:var(--text-3)">Tidak ada hasil</div>';
-  } else {
-    dropdown.innerHTML = filtered.map(p => {
-      const tujuan = buildTujuanText(p);
-      const icon = p.status === 'final' ? '✅' : '📝';
-      const label = `${p.nomor_surat || '—'} · ${formatTanggal(p.tanggal_berangkat)} · ${tujuan} (${p.peserta?.length || 0} orang)`;
-      return `<div onmousedown="selectGenPJD('${p.id}')" style="padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--border);font-size:13px;transition:var(--transition)" onmouseover="this.style.background='var(--surface-2)'" onmouseout="this.style.background=''">
-        ${icon} ${label}
-      </div>`;
-    }).join('');
+    dd.innerHTML = `<div style="padding:14px;font-size:13px;color:var(--text-3)">Tidak ada perjalanan yang cocok</div>`;
+    dd.style.display = '';
+    return;
   }
 
-  dropdown.style.display = 'block';
+  dd.innerHTML = filtered.map(p => {
+    const tujuan = buildTujuanText(p);
+    const icon   = p.status === 'final' ? '✅' : '📝';
+    return `
+      <div style="padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--border)"
+        onmousedown="selectGenPJD('${p.id}')"
+        onmouseover="this.style.background='var(--surface-2)'" onmouseout="this.style.background=''">
+        <div style="font-weight:700;font-size:13px">${icon} ${p.nomor_surat || '—'}</div>
+        <div class="text-muted text-sm">${formatTanggal(p.tanggal_berangkat)} · ${tujuan} · ${p.peserta?.length||0} orang</div>
+      </div>`;
+  }).join('');
+  dd.style.display = '';
 }
 
 function onGenPJDSearchInput(value) {
   GEN_UI.search = value;
-  GEN_UI.pjdId = '';
-  const hiddenInput = document.getElementById('gen-pjd-select');
-  if (hiddenInput) hiddenInput.value = '';
+  GEN_UI.pjdId  = '';
+  const hidden = document.getElementById('gen-pjd-select');
+  if (hidden) hidden.value = '';
   onSelectPJD('');
   renderGenPJDDropdown();
 }
 
 function selectGenPJD(id) {
   const pjd = getPJDList().find(x => x.id === id);
-  if (!pjd) return;
+  GEN_UI.pjdId  = id;
+  GEN_UI.search = pjd ? `${pjd.nomor_surat || '—'} · ${formatTanggal(pjd.tanggal_berangkat)} · ${buildTujuanText(pjd)}` : '';
 
-  GEN_UI.pjdId = id;
-  const tujuan = buildTujuanText(pjd);
-  const icon = pjd.status === 'final' ? '✅' : '📝';
-  GEN_UI.search = `${icon} ${pjd.nomor_surat || '—'} · ${formatTanggal(pjd.tanggal_berangkat)} · ${tujuan} (${pjd.peserta?.length || 0} orang)`;
-
-  const searchInput = document.getElementById('gen-pjd-search');
-  const hiddenInput = document.getElementById('gen-pjd-select');
-  const dropdown = document.getElementById('gen-pjd-dropdown');
-
-  if (searchInput) searchInput.value = GEN_UI.search;
-  if (hiddenInput) hiddenInput.value = id;
-  if (dropdown) dropdown.style.display = 'none';
+  const searchInputEl = document.getElementById('gen-pjd-search');
+  if (searchInputEl) searchInputEl.value = GEN_UI.search;
+  const hidden = document.getElementById('gen-pjd-select');
+  if (hidden) hidden.value = id;
+  const dd = document.getElementById('gen-pjd-dropdown');
+  if (dd) dd.style.display = 'none';
 
   onSelectPJD(id);
 }
+
+// Tutup dropdown kalau klik di luar search box — dipasang sekali di level
+// module (bukan di dalam renderGeneratePage) supaya listener nggak numpuk
+// tiap kali halaman Generate dibuka ulang.
+document.addEventListener('click', (e) => {
+  const wrap = document.getElementById('gen-pjd-search-wrap');
+  if (!wrap) return;
+  if (!wrap.contains(e.target)) {
+    const dd = document.getElementById('gen-pjd-dropdown');
+    if (dd) dd.style.display = 'none';
+  }
+});
 
 function renderTemplateSelector() {
   const JENIS = [
@@ -848,12 +856,3 @@ function triggerGenerate() {
 
   runGenerate(pjdId, selections);
 }
-
-// ─── GLOBAL EVENT LISTENER ────────────────────────────────
-document.addEventListener('click', (e) => {
-  const wrap = document.getElementById('gen-pjd-search-wrap');
-  const dropdown = document.getElementById('gen-pjd-dropdown');
-  if (wrap && dropdown && !wrap.contains(e.target)) {
-    dropdown.style.display = 'none';
-  }
-});
