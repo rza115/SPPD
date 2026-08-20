@@ -760,8 +760,21 @@ function toggleTransport(pegawaiId, checked) {
     const nomInput = document.getElementById('pnom-' + pegawaiId);
     if (nomInput && !nomInput.value && suggest) {
       nomInput.value = suggest;
-      if (p) p.nominal_transport = suggest;
     }
+    // BUG FIX: sebelumnya nominal_transport cuma ke-set ke state kalau kolom
+    // "Nominal per Kali" masih KOSONG pas checkbox dicentang. Padahal kolom
+    // itu selalu udah ke-render duluan dengan value saran tarif (lihat
+    // renderPesertaItem — `existing?.nominal_transport || suggestTransport || ''`),
+    // walau div-nya masih disembunyikan sebelum dicentang. Akibatnya begitu user
+    // centang "dapat transport", angka saran itu cuma numpang tampil di layar
+    // tapi nggak pernah kesimpen ke PJD.form.peserta — total transport ke-hitung
+    // Rp 0 meski kolomnya kelihatan ada isinya.
+    // Fix: selalu sinkronkan nilai kolom yang lagi tampil ke state peserta,
+    // apapun asal nilainya (saran otomatis, isian lama, atau kosong) — dan ini
+    // fungsi yang sama yang dipakai oninput kolom, jadi formula + kalkulasi
+    // panel ikut ke-refresh konsisten.
+    updatePesertaTransport(pegawaiId);
+    return;
   }
 
   refreshPesertaTotal(pegawaiId);
