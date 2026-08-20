@@ -339,6 +339,10 @@ function renderStep(n) {
   const next = document.getElementById('btn-next');
   if (!body) return;
 
+  // Step 2 inputs live in the DOM. Sync them before Step 4 renders its totals,
+  // including the case where the suggested nominal was already prefilled.
+  if (n === 4) syncPesertaTransportFromDOM();
+
   if (prev) prev.style.display = n === 1 ? 'none' : '';
   if (next) next.textContent = n === PJD.totalSteps ? '💾 Simpan Perjalanan' : 'Lanjut →';
 
@@ -704,10 +708,11 @@ function togglePeserta(pegawaiId) {
     document.getElementById('ptotal-' + pegawaiId).textContent = '';
   } else {
     // Add
+    const suggestTransport = getSuggestTransport();
     PJD.form.peserta.push({
       pegawai_id: pegawaiId,
       dapat_transport: false,
-      nominal_transport: 0,
+      nominal_transport: suggestTransport || 0,
       jumlah_kali: 1,
     });
     item.classList.add('selected');
@@ -761,6 +766,12 @@ function toggleTransport(pegawaiId, checked) {
     if (nomInput && !nomInput.value && suggest) {
       nomInput.value = suggest;
     }
+    // Keep a state fallback as well. This covers a checkbox event firing before
+    // the hidden nominal input is available in the DOM.
+    if (p) {
+      p.nominal_transport = parseInt(nomInput?.value) || suggest || 0;
+      p.jumlah_kali = parseInt(document.getElementById('pkali-' + pegawaiId)?.value) || 1;
+    }
     // BUG FIX: sebelumnya nominal_transport cuma ke-set ke state kalau kolom
     // "Nominal per Kali" masih KOSONG pas checkbox dicentang. Padahal kolom
     // itu selalu udah ke-render duluan dengan value saran tarif (lihat
@@ -784,12 +795,25 @@ function toggleTransport(pegawaiId, checked) {
 function updatePesertaTransport(pegawaiId) {
   const p = PJD.form.peserta.find(x => x.pegawai_id === pegawaiId);
   if (!p) return;
-  p.nominal_transport = parseInt(document.getElementById('pnom-' + pegawaiId)?.value) || 0;
-  p.jumlah_kali       = parseInt(document.getElementById('pkali-' + pegawaiId)?.value) || 1;
+  const nominalInput = document.getElementById('pnom-' + pegawaiId);
+  const kaliInput = document.getElementById('pkali-' + pegawaiId);
+  if (nominalInput) p.nominal_transport = parseInt(nominalInput.value) || 0;
+  if (kaliInput) p.jumlah_kali = parseInt(kaliInput.value) || 1;
   const formulaEl = document.getElementById('ptrans-formula-' + pegawaiId);
   if (formulaEl) formulaEl.innerHTML = calcTransportFormula(p);
   refreshPesertaTotal(pegawaiId);
   updateCalcPanel();
+}
+
+function syncPesertaTransportFromDOM() {
+  PJD.form.peserta.forEach(p => {
+    const transportChk = document.getElementById('ptrans-chk-' + p.pegawai_id);
+    const nominalInput  = document.getElementById('pnom-' + p.pegawai_id);
+    const kaliInput     = document.getElementById('pkali-' + p.pegawai_id);
+    if (transportChk) p.dapat_transport = transportChk.checked;
+    if (nominalInput) p.nominal_transport = parseInt(nominalInput.value) || 0;
+    if (kaliInput) p.jumlah_kali = parseInt(kaliInput.value) || 1;
+  });
 }
 
 function refreshPesertaTotal(pegawaiId) {
@@ -990,6 +1014,7 @@ function renderStep4(body) {
 
 // ─── WIZARD NAVIGATION ────────────────────────────────────
 function wizardNext() {
+  if (PJD.currentStep === 2) syncPesertaTransportFromDOM();
   if (!validateStep(PJD.currentStep)) return;
   if (PJD.currentStep === PJD.totalSteps) {
     savePerjalanan();
