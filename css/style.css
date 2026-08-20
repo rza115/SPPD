@@ -1121,7 +1121,8 @@ tr:hover td { background: var(--surface-2); }
   border-top: 1px solid var(--border);
   display: none;
 }
-.peserta-item.selected .peserta-transport { display: block; }
+.peserta-item.selected .peserta-transport,
+.peserta-item.has-transport .peserta-transport { display: block; }
 
 .transport-toggle { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; font-size: 13px; }
 .transport-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }

@@ -757,7 +757,9 @@ function toggleTransport(pegawaiId, checked) {
   const item = document.getElementById('pitem-' + pegawaiId);
   if (item) {
     item.classList.toggle('has-transport', checked);
-    item.classList.toggle('selected', !checked);
+    // The participant remains selected while transport is toggled.
+    // Removing `selected` collapses the whole transport panel via CSS.
+    item.classList.add('selected');
   }
 
   if (checked) {
