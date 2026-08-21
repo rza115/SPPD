@@ -499,6 +499,83 @@ function updateGenerateProgress(msg) {
   if (el) el.textContent = msg;
 }
 
+const GENERATE_PJD_UI = { search: '' };
+
+function generateDateSearchTerms(date) {
+  if (!date) return [];
+  const d = new Date(date + 'T00:00:00');
+  if (Number.isNaN(d.getTime())) return [date];
+  const day = d.getDate();
+  const dd = String(day).padStart(2, '0');
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const year = d.getFullYear();
+  return [
+    date,
+    formatTanggal(date),
+    `${day} ${BULAN[d.getMonth()]} ${year}`,
+    `${dd}/${mm}/${year}`,
+    `${dd}-${mm}-${year}`,
+    namaHari(date),
+  ];
+}
+
+function filterGeneratePJDList(list, search) {
+  if (!search || !search.trim()) return list;
+  const q = search.trim().toLowerCase();
+
+  return list.filter((p) => {
+    const tujuan = buildTujuanText(p);
+    const pesertaNames = (p.peserta || []).map((ps) =>
+      getPegawaiById(ps.pegawai_id)?.nama_lengkap || ''
+    ).join(' ');
+    const dates = [p.tanggal_surat, p.tanggal_berangkat, p.tanggal_kembali]
+      .filter(Boolean)
+      .flatMap(generateDateSearchTerms);
+    const haystack = [
+      p.nomor_surat, p.kode_no, p.maksud_perjalanan, p.deskripsi_tugas,
+      p.dasar, p.alat_angkutan, p.jenis_perjalanan, p.status,
+      tujuan, pesertaNames, ...dates,
+    ].filter(Boolean).join(' ').toLowerCase();
+
+    return haystack.includes(q);
+  });
+}
+
+function generatePJDOption(p, activeLabel = false) {
+  const tujuan = buildTujuanText(p);
+  const label = `${p.nomor_surat || '—'} · ${formatTanggal(p.tanggal_berangkat)} · ${tujuan} (${p.peserta?.length || 0} orang)`;
+  const icon = p.status === 'final' ? '✅' : '📝';
+  return `<option value="${p.id}">${activeLabel ? '📌 Pilihan aktif · ' : ''}${icon} ${label}</option>`;
+}
+
+function onGeneratePJDSearch(value) {
+  GENERATE_PJD_UI.search = value;
+  const select = document.getElementById('gen-pjd-select');
+  if (!select) return;
+
+  const selectedId = select.value;
+  const allList = getPJDList().sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  const filtered = filterGeneratePJDList(allList, value);
+  const selected = selectedId ? allList.find((p) => p.id === selectedId) : null;
+  const selectedOutsideResults = selected && !filtered.some((p) => p.id === selectedId);
+  const placeholder = filtered.length
+    ? '— Pilih Perjalanan Dinas —'
+    : '— Tidak ada hasil pencarian —';
+
+  select.innerHTML = `
+    <option value="">${placeholder}</option>
+    ${selectedOutsideResults ? generatePJDOption(selected, true) : ''}
+    ${filtered.map((p) => generatePJDOption(p)).join('')}`;
+
+  if (selected) select.value = selectedId;
+  const count = document.getElementById('gen-pjd-search-count');
+  if (count) {
+    count.textContent = value.trim()
+      ? `${filtered.length} dari ${allList.length} perjalanan ditemukan`
+      : `${allList.length} perjalanan tersedia`;
+  }
+}
+
 // ─── GENERATE PAGE UI ─────────────────────────────────────
 function renderGeneratePage() {
   const c = document.getElementById('generate-container');
@@ -529,13 +606,8 @@ function renderGeneratePage() {
     return;
   }
 
-  const pjdOptions = pjdList.map(p => {
-    const lama   = hitungLama(p.tanggal_berangkat, p.tanggal_kembali);
-    const tujuan = buildTujuanText(p);
-    const label  = `${p.nomor_surat || '—'} · ${formatTanggal(p.tanggal_berangkat)} · ${tujuan} (${p.peserta?.length||0} orang)`;
-    const icon   = p.status === 'final' ? '✅' : '📝';
-    return `<option value="${p.id}">${icon} ${label}</option>`;
-  }).join('');
+  GENERATE_PJD_UI.search = '';
+  const pjdOptions = pjdList.map((p) => generatePJDOption(p)).join('');
 
   const genHistory = DB.getArr(KEYS.generated).slice(0, 5);
 
@@ -547,7 +619,18 @@ function renderGeneratePage() {
         <div><h3>Pilih Perjalanan Dinas</h3><p>Pilih perjalanan yang akan digenerate dokumennya</p></div>
       </div>
       <div class="card-body">
+        <div class="form-group">
+          <label class="form-label" for="gen-pjd-search">Cari Perjalanan Dinas</label>
+          <div class="search-bar" style="width:100%">
+            <span>🔍</span>
+            <input type="text" id="gen-pjd-search"
+              placeholder="Cari nomor, tujuan, kata, peserta, atau tanggal..."
+              oninput="onGeneratePJDSearch(this.value)">
+          </div>
+          <div class="form-text" id="gen-pjd-search-count">${pjdList.length} perjalanan tersedia</div>
+        </div>
         <div class="form-group" style="margin-bottom:0">
+          <label class="form-label" for="gen-pjd-select">Hasil Pencarian</label>
           <select class="form-control" id="gen-pjd-select" onchange="onSelectPJD(this.value)" style="font-size:13px">
             <option value="">— Pilih Perjalanan Dinas —</option>
             ${pjdOptions}
