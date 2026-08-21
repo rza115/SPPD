@@ -136,7 +136,7 @@ PAGES.panduan = `
   ['nip_pptk','🔄 Auto','auto','NIP PPTK — terisi otomatis saat nama PPTK dipilih','197808172005011016'],
 ]) + argSection('⚡','#EBF3FD','Computed Arguments','Dihitung otomatis oleh sistem — tidak perlu diisi manual',[
   ['lama_perjalanan','⚡ Computed','computed','Lama perjalanan + terbilang<br><span class="text-muted text-sm">tanggal_kembali − tanggal_berangkat + 1</span>','1 (Satu) Hari'],
-  ['hari_tanggal_tugas','⚡ Computed','computed','Rangkaian hari dan tanggal untuk Surat Tugas<br><span class="text-muted text-sm">Nama hari + format tanggal lengkap</span>','hari Rabu, tanggal 15 April 2026'],
+  ['hari_tanggal_tugas','⚡ Computed','computed','Rangkaian hari dan tanggal untuk Surat Tugas<br><span class="text-muted text-sm">Nama hari + format tanggal lengkap</span>','Rabu, 15 April 2026'],
   ['jam','⚡ Computed','computed','Gabungan jam mulai & selesai untuk baris "Pukul :"<br><span class="text-muted text-sm">jam_mulai s.d. jam_selesai — kalau cuma jam_mulai terisi, tampil itu saja; kosong jika keduanya kosong</span>','08.00 s.d. 16.00'],
   ['kota_tanggal','⚡ Computed','computed','Baris kota dan tanggal untuk TTD<br><span class="text-muted text-sm">unit_kerja.kota + ", " + tanggal_surat</span>','Cibinong, 01 Oktober 2025'],
   ['untuk_pembayaran','⚡ Computed','computed','Teks "Untuk Pembayaran" di kwitansi<br><span class="text-muted text-sm">"Biaya Uang Harian [dan Transport] Perjalanan Dinas [jenis] ke [tujuan]" — [tujuan] ikut nama tempat manual kalau diisi</span>','Biaya Uang Harian dan Transport Perjalanan Dinas Dalam Daerah ke Kantor Kecamatan Kemang'],

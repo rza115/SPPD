@@ -114,15 +114,15 @@ function hitungLama(tglBerangkat, tglKembali) {
 
 /**
  * Compute {{hari_tanggal_tugas}}
- * "hari Senin s.d Jumat, tanggal 5 s.d 9 Januari 2026"
- * atau "hari Rabu, tanggal 15 April 2026"
+ * "Senin s.d Jumat, 5 s.d 9 Januari 2026"
+ * atau "Rabu, 15 April 2026"
  */
 function formatHariTanggalTugas(tglBerangkat, tglKembali) {
   if (!tglBerangkat) return '';
   const a = new Date(tglBerangkat + 'T00:00:00');
 
   if (!tglKembali || tglBerangkat === tglKembali) {
-    return `hari ${HARI[a.getDay()]}, tanggal ${formatTanggal(tglBerangkat)}`;
+    return `${HARI[a.getDay()]}, ${formatTanggal(tglBerangkat)}`;
   }
 
   const b = new Date(tglKembali + 'T00:00:00');
@@ -144,7 +144,7 @@ function formatHariTanggalTugas(tglBerangkat, tglKembali) {
     tanggalPart = `${tglA} s.d ${tglB} ${bulanA} ${tahunA}`;
   }
 
-  return `hari ${hariA} s.d ${hariB}, tanggal ${tanggalPart}`;
+  return `${hariA} s.d ${hariB}, ${tanggalPart}`;
 }
 
 /**
