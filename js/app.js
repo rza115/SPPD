@@ -336,15 +336,14 @@ function renderTemplateList() {
 async function deleteTemplate(id) {
   const t = AppState.templates.find(x => x.id === id);
   if (!t) return;
-  if (!confirm(`Hapus template "${t.nama}"?`)) return;
+  if (!confirm(`Pindahkan template "${t.nama}" ke Trash?`)) return;
 
   try {
-    await TemplateStorage.remove(t);
-    AppState.saveTemplates(AppState.templates.filter(x => x.id !== id));
+    DB.moveToTrash(KEYS.templates, id, t.nama || 'Template');
     await DB.flush();
     renderTemplateList();
     updateTemplateBadge();
-    toast('Template dihapus', 'success');
+    toast('Template dipindahkan ke Trash', 'success');
   } catch (err) {
     toast(err.message || 'Gagal menghapus template', 'error');
   }

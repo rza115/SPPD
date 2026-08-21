@@ -33,7 +33,7 @@ const STAI = {
   },
 };
 
-const KEY_STAI = 'sppd_surat_tugas_ai';
+const KEY_STAI = KEYS.suratTugasAI;
 
 // ─── DB HELPERS (pakai DB yang sudah ada) ─────────────────
 const getSTAIList  = ()    => DB.getArr(KEY_STAI);
@@ -701,8 +701,8 @@ async function staiDownloadFromHistory(id) {
 
 function staiHapus(id) {
   const s = getSTAIList().find(x => x.id === id);
-  if (!confirm(`Hapus surat "${s?.nomor_surat||'ini'}"?`)) return;
-  saveSTAIList(getSTAIList().filter(x => x.id !== id));
+  if (!confirm(`Pindahkan surat "${s?.nomor_surat||'ini'}" ke Trash?`)) return;
+  DB.moveToTrash(KEY_STAI, id, s?.nomor_surat || 'Surat Tugas AI');
   staiRenderRiwayat(document.getElementById('stai-tab-riwayat'));
-  toast('Surat dihapus dari riwayat', 'success');
+  toast('Surat dipindahkan ke Trash', 'success');
 }

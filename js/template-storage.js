@@ -97,7 +97,7 @@ const TemplateStorage = {
   async remove(template) {
     if (!template?.storagePath || !this.canUse()) return;
     const { error } = await this._sb().storage.from(this.BUCKET).remove([template.storagePath]);
-    if (error) console.warn('[TemplateStorage] remove failed', error);
+    if (error) throw error;
   },
 
   /** Metadata saja — tanpa fileData */

@@ -179,10 +179,10 @@ function saveUK(id) {
 
 function deleteUK(id) {
   const uk = DB.getArr(KEYS.unitKerja).find(x => x.id === id);
-  if (!confirm(`Hapus unit kerja "${uk?.nama}"?`)) return;
-  DB.set(KEYS.unitKerja, DB.getArr(KEYS.unitKerja).filter(x => x.id !== id));
+  if (!confirm(`Pindahkan unit kerja "${uk?.nama}" ke Trash?`)) return;
+  DB.moveToTrash(KEYS.unitKerja, id, uk?.nama || 'Unit kerja');
   renderUnitKerja();
-  toast('Unit kerja dihapus', 'success');
+  toast('Unit kerja dipindahkan ke Trash', 'success');
 }
 
 // ══════════════════════════════════════════════════════════
@@ -316,10 +316,10 @@ function savePegawai(id) {
 
 function deletePegawai(id) {
   const p = DB.getArr(KEYS.pegawai).find(x => x.id === id);
-  if (!confirm(`Hapus pegawai "${p?.nama_lengkap}"?`)) return;
-  DB.set(KEYS.pegawai, DB.getArr(KEYS.pegawai).filter(x => x.id !== id));
+  if (!confirm(`Pindahkan pegawai "${p?.nama_lengkap}" ke Trash?`)) return;
+  DB.moveToTrash(KEYS.pegawai, id, p?.nama_lengkap || 'Pegawai');
   renderPegawai();
-  toast('Pegawai dihapus', 'success');
+  toast('Pegawai dipindahkan ke Trash', 'success');
 }
 
 // ══════════════════════════════════════════════════════════
@@ -646,10 +646,10 @@ function saveSipd(id) {
 
 function deleteSipd(id) {
   const s = DB.getArr(KEYS.sipd).find(x => x.id === id);
-  if (!confirm(`Hapus kode "${s?.kode}"?`)) return;
-  DB.set(KEYS.sipd, DB.getArr(KEYS.sipd).filter(x => x.id !== id));
+  if (!confirm(`Pindahkan kode "${s?.kode}" ke Trash?`)) return;
+  DB.moveToTrash(KEYS.sipd, id, s?.kode || 'Kode SIPD');
   renderSipd();
-  toast('Kode SIPD dihapus', 'success');
+  toast('Kode SIPD dipindahkan ke Trash', 'success');
 }
 
 // ─── FORMAT HELPER (fallback jika terbilang.js belum load) ─

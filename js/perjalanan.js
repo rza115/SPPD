@@ -286,10 +286,10 @@ function editPerjalanan(id) {
 
 function deletePerjalanan(id) {
   const p = getPJDList().find(x => x.id === id);
-  if (!confirm(`Hapus perjalanan "${p?.nomor_surat}"?`)) return;
-  savePJDList(getPJDList().filter(x => x.id !== id));
+  if (!confirm(`Pindahkan perjalanan "${p?.nomor_surat}" ke Trash?`)) return;
+  DB.moveToTrash(KEYS.perjalanan, id, p?.nomor_surat || 'Perjalanan dinas');
   renderPerjalananList();
-  toast('Perjalanan dinas dihapus', 'success');
+  toast('Perjalanan dinas dipindahkan ke Trash', 'success');
 }
 
 // ─── WIZARD CONTAINER ─────────────────────────────────────

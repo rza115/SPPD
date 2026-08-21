@@ -13,6 +13,8 @@ const KEYS = {
   perjalanan: 'sppd_perjalanan',
   templates : 'sppd_templates',
   generated : 'sppd_generated',
+  suratTugasAI: 'sppd_surat_tugas_ai',
+  trash     : 'sppd_trash',
 };
 
 const ALL_STORE_KEYS = Object.values(KEYS);
@@ -72,6 +74,63 @@ const DB = {
         }
       }
     }
+  },
+
+  /**
+   * Pindahkan sebuah record array ke Trash. Record asli disimpan utuh agar
+   * dapat direstore, termasuk metadata file template di Supabase Storage.
+   */
+  moveToTrash(storeKey, recordId, label = '') {
+    if (storeKey === KEYS.trash) return null;
+    const list = this.getArr(storeKey);
+    const index = list.findIndex((item) => String(item?.id) === String(recordId));
+    if (index < 0) return null;
+
+    const record = list[index];
+    const entry = {
+      id: this.genId('trash'),
+      storeKey,
+      record,
+      originalIndex: index,
+      label: label || String(recordId),
+      deletedAt: new Date().toISOString(),
+    };
+
+    // Simpan salinan Trash lebih dahulu. Pada cloud, urutan ini memastikan
+    // gangguan sinkronisasi tidak membuat record hilang tanpa cadangan.
+    this.set(KEYS.trash, [entry, ...this.getArr(KEYS.trash)]);
+    this.set(storeKey, list.filter((_, i) => i !== index));
+    if (typeof refreshTrashBadge === 'function') refreshTrashBadge();
+    return entry;
+  },
+
+  restoreFromTrash(trashId) {
+    const trash = this.getArr(KEYS.trash);
+    const entry = trash.find((item) => item.id === trashId);
+    if (!entry) return { ok: false, reason: 'not_found' };
+
+    const list = this.getArr(entry.storeKey);
+    const recordId = entry.record?.id;
+    if (recordId != null && list.some((item) => String(item?.id) === String(recordId))) {
+      return { ok: false, reason: 'duplicate' };
+    }
+
+    const restored = [...list];
+    const index = Math.min(Math.max(Number(entry.originalIndex) || 0, 0), restored.length);
+    restored.splice(index, 0, entry.record);
+    this.set(entry.storeKey, restored);
+    this.set(KEYS.trash, trash.filter((item) => item.id !== trashId));
+    if (typeof refreshTrashBadge === 'function') refreshTrashBadge();
+    return { ok: true, entry };
+  },
+
+  removeFromTrash(trashId) {
+    const trash = this.getArr(KEYS.trash);
+    const entry = trash.find((item) => item.id === trashId);
+    if (!entry) return null;
+    this.set(KEYS.trash, trash.filter((item) => item.id !== trashId));
+    if (typeof refreshTrashBadge === 'function') refreshTrashBadge();
+    return entry;
   },
 
   isReady() {

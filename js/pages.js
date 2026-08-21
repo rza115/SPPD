@@ -399,6 +399,8 @@ PAGES.rekap = `<div id="rekap-container"></div>`;
 
 PAGES['surat-tugas-ai'] = `<div id="st-ai-container"></div>`;
 
+PAGES.trash = `<div id="trash-container"></div>`;
+
 // ── Page Loader ──────────────────────────────────────────
 function loadPage(pageId) {
   const container = document.getElementById('main-content');
@@ -418,6 +420,7 @@ function loadPage(pageId) {
   if (pageId === 'generate')   renderGeneratePage();
   if (pageId === 'rekap')      renderRekapPage();
   if (pageId === 'surat-tugas-ai')   renderSuratTugasAI();
+  if (pageId === 'trash')       renderTrashPage();
 }
 
 function initTemplateUpload() {
@@ -453,6 +456,7 @@ const PAGE_TITLES = {
   panduan:    { title: 'Panduan Arguments',    sub: 'Referensi lengkap placeholder untuk template .docx' },
   template:   { title: 'Kelola Template',      sub: 'Upload dan manajemen template dokumen .docx' },
   master:     { title: 'Data Master',          sub: 'Pegawai, unit kerja, tarif, dan kode rekening' },
+  trash:      { title: 'Trash',                sub: 'Restore data atau hapus secara permanen' },
   perjalanan: { title: 'Perjalanan Dinas',     sub: 'Buat dan kelola perjalanan dinas' },
   generate:   { title: 'Generate Dokumen',     sub: 'Buat dokumen perjalanan dinas' },
   'surat-tugas-ai' : {title : 'Surat Tugas AI', sub   : 'Draft surat dengan bantuan Gemini — review & generate .docx'
@@ -510,6 +514,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     await DB.init();
     updateCloudBadge();
+    refreshTrashBadge();
   } catch (err) {
     console.error(err);
     toast('Gagal memuat data: ' + (err.message || 'unknown'), 'error', 5000);
