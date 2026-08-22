@@ -141,7 +141,7 @@ PAGES.panduan = `
   ['kota_tanggal','⚡ Computed','computed','Baris kota dan tanggal untuk TTD<br><span class="text-muted text-sm">unit_kerja.kota + ", " + tanggal_surat</span>','Cibinong, 01 Oktober 2025'],
   ['untuk_pembayaran','⚡ Computed','computed','Teks "Untuk Pembayaran" di kwitansi<br><span class="text-muted text-sm">"Biaya Uang Harian [dan Transport] Perjalanan Dinas [jenis] ke [tujuan]" — [tujuan] ikut nama tempat manual kalau diisi</span>','Biaya Uang Harian dan Transport Perjalanan Dinas Dalam Daerah ke Kantor Kecamatan Kemang'],
   ['uang_harian','⚡ Computed','computed','Nominal uang harian per peserta<br><span class="text-muted text-sm">tarif_uang_harian[jenis_perjalanan] — bisa dioverride manual di Step 1 (field "Uang Harian")</span>','Rp 170.000'],
-  ['transport','⚡ Computed','computed','Total transport per peserta (0 jika tidak dapat)<br><span class="text-muted text-sm">nominal_transport × jumlah_kali × lama_perjalanan</span>','Rp 600.000'],
+  ['transport','⚡ Computed','computed','Total transport per peserta (0 jika tidak dapat)<br><span class="text-muted text-sm">nominal_transport × jumlah_kali</span>','Rp 300.000'],
   ['total','⚡ Computed','computed','Total per peserta (kwitansi)<br><span class="text-muted text-sm">uang_harian + transport</span>','Rp 310.000'],
   ['total_terbilang','⚡ Computed','computed','Total per peserta dalam kata-kata Bahasa Indonesia','Tiga Ratus Sepuluh Ribu Rupiah'],
   ['grand_total','⚡ Computed','computed','Total keseluruhan semua peserta (Rekap Belanja)<br><span class="text-muted text-sm">SUM semua total peserta</span>','Rp 1.660.000'],

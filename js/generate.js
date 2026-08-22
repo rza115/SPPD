@@ -29,7 +29,7 @@ function calcPesertaFull(ps, pjd) {
   const harian = hasOverride ? (parseInt(override) || 0) : (tarif[pjd.jenis_perjalanan]?.uang_harian || 0);
   const totalH = harian * lama;
   const totalT = ps.dapat_transport
-    ? (parseInt(ps.nominal_transport) || 0) * (parseInt(ps.jumlah_kali) || 1) * lama : 0;
+    ? (parseInt(ps.nominal_transport) || 0) * (parseInt(ps.jumlah_kali) || 1) : 0;
   return { harian, totalH, totalT, total: totalH + totalT, lama };
 }
 

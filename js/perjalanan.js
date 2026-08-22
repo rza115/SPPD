@@ -89,7 +89,7 @@ function calcPeserta(p) {
   const harian = getUangHarian(PJD.form);
   const totalHarian    = harian * lama;
   const totalTransport = p.dapat_transport
-    ? (parseInt(p.nominal_transport) || 0) * (parseInt(p.jumlah_kali) || 1) * lama
+    ? (parseInt(p.nominal_transport) || 0) * (parseInt(p.jumlah_kali) || 1)
     : 0;
   return {
     ...p,
@@ -264,7 +264,7 @@ function calcPesertaStatic(ps, jenis, lama, override) {
   const hasOverride = override !== null && override !== undefined && override !== '';
   const harian = hasOverride ? (parseInt(override) || 0) : (tarif[jenis]?.uang_harian || 0);
   const totalT = ps.dapat_transport
-    ? (parseInt(ps.nominal_transport)||0) * (parseInt(ps.jumlah_kali)||1) * lama : 0;
+    ? (parseInt(ps.nominal_transport)||0) * (parseInt(ps.jumlah_kali)||1) : 0;
   return { ...ps, total: harian * lama + totalT };
 }
 
@@ -616,7 +616,7 @@ function renderStep2(body) {
           <div id="calc-content"><div style="opacity:.5;font-size:13px">Pilih peserta untuk melihat kalkulasi</div></div>
         </div>
         <div class="alert alert-info">
-          💡 <strong>Transport:</strong> Nominal × Jumlah Kali × ${getLamaPerjalanan() || '?'} Hari<br>
+          💡 <strong>Transport:</strong> Nominal per kali × Jumlah Kali (tidak dikalikan jumlah hari)<br>
           ${(PJD.form.jenis_perjalanan || 'dalam_kota') === 'dalam_kota'
             ? 'Hanya <strong>satu peserta</strong> yang dapat biaya transport (dalam kota).'
             : 'Untuk luar daerah/provinsi, <strong>setiap peserta</strong> boleh diisi transport masing-masing.'}
@@ -688,9 +688,8 @@ function renderPesertaItem(pgw) {
 function calcTransportFormula(p) {
   const nom  = parseInt(p.nominal_transport) || 0;
   const kali = parseInt(p.jumlah_kali) || 1;
-  const lama = getLamaPerjalanan() || 1;
-  const total = nom * kali * lama;
-  return `${formatRupiah(nom)} × ${kali} kali × ${lama} hari = <strong>${formatRupiah(total)}</strong>`;
+  const total = nom * kali;
+  return `${formatRupiah(nom)} × ${kali} kali = <strong>${formatRupiah(total)}</strong>`;
 }
 
 function togglePeserta(pegawaiId) {
@@ -951,7 +950,7 @@ function renderStep4(body) {
         <td><strong>${pgw?.nama_lengkap||'?'}</strong><br><span class="text-muted text-sm">${pgw?.pangkat||''} ${pgw?.golongan?'/ '+pgw.golongan:''}</span></td>
         <td>${formatRupiah(cp.uang_harian)} × ${lama} hari<br><strong>${formatRupiah(cp.total_uang_harian)}</strong></td>
         <td>${p.dapat_transport
-          ? `${formatRupiah(nom)} × ${kali} kali × ${lama} hari<br><strong>${formatRupiah(cp.total_transport)}</strong>`
+          ? `${formatRupiah(nom)} × ${kali} kali<br><strong>${formatRupiah(cp.total_transport)}</strong>`
           : '<span class="text-muted">—</span>'}</td>
         <td><strong style="color:var(--navy)">${formatRupiah(cp.total)}</strong></td>
         <td><span class="tbl-mono text-sm">${pgw?.nomor_rekening||'—'}</span></td>
