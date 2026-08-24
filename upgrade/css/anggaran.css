@@ -1,0 +1,55 @@
+.anggaran-inline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  margin-top: 7px;
+  color: var(--text-2);
+  font-size: 12px;
+}
+
+.anggaran-final-preview {
+  margin-top: 16px;
+}
+
+.anggaran-preview-grid {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) auto;
+  gap: 5px 16px;
+  max-width: 430px;
+  margin-top: 9px;
+}
+
+.anggaran-preview-grid strong {
+  text-align: right;
+}
+
+.anggaran-actions {
+  flex-wrap: wrap;
+  min-width: 270px;
+}
+
+.anggaran-debit {
+  color: var(--red);
+  font-weight: 700;
+}
+
+.anggaran-credit {
+  color: var(--success);
+  font-weight: 700;
+}
+
+.status-anggaran-warning {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.status-anggaran-danger {
+  background: #fde8e8;
+  color: var(--red);
+}
+
+@media (max-width: 760px) {
+  .anggaran-actions {
+    min-width: 0;
+  }
+}
