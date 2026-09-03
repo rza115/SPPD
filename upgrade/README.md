@@ -1,5 +1,8 @@
 # Paket Upgrade Pengendalian Pagu Anggaran
 
+- Versi paket: **2026-09-03**
+- Baseline aplikasi: **commit `06d4cda` (`update 5`)**
+
 Folder ini berisi rancangan dan patch pengembangan fitur pagu anggaran untuk
 aplikasi SPPD. Tidak ada file aplikasi aktif yang diubah ketika paket ini
 dibuat.
@@ -28,7 +31,21 @@ dibuat.
 9. Validasi tahun anggaran dan saldo sebelum finalisasi.
 10. Snapshot nilai biaya pada saat Final agar tarif lama tidak berubah.
 
+## Kompatibilitas dengan aplikasi saat ini
+
+Paket telah diselaraskan dengan perubahan aplikasi sampai `update 5`, termasuk:
+
+- validasi bentrok jadwal peserta sebelum perjalanan disimpan;
+- alur generate dan unduh dokumen yang baru;
+- format rekap tujuan perjalanan yang baru; dan
+- kwitansi yang hanya menampilkan uang harian.
+
+Pengendalian pagu tetap memakai **total biaya pada rekap**, yaitu uang harian
+ditambah transport. Perubahan tampilan/nominal kwitansi tidak mengurangi nilai
+realisasi anggaran untuk transport.
+
 ## Status
 
-Paket ini adalah kandidat upgrade yang harus diuji pada salinan data terlebih
-dahulu. Patch belum diterapkan ke aplikasi aktif.
+Patch telah diperiksa dapat diterapkan ke baseline di atas dan file JavaScript
+hasil integrasi telah lolos pemeriksaan sintaks. Patch belum diterapkan ke file
+aplikasi aktif; tetap lakukan uji data nonproduksi sebelum dipakai di produksi.

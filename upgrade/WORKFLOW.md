@@ -33,6 +33,11 @@ Simpan snapshot biaya + mutasi pemakaian
 Pagu berkurang
 ```
 
+Nilai mutasi Final mengikuti grand total rekap belanja: uang harian seluruh
+peserta ditambah transport yang berhak diterima. Pada versi aplikasi saat ini,
+kwitansi hanya menampilkan uang harian; aturan tampilan kwitansi tersebut tidak
+menghapus komponen transport dari realisasi anggaran.
+
 ### Perubahan status
 
 | Perubahan | Perlakuan |
@@ -108,3 +113,5 @@ Minimal setiap akhir bulan:
 4. Periksa transaksi pembalik dan alasannya.
 5. Pastikan tidak ada sisa negatif.
 6. Ekspor atau arsipkan riwayat mutasi.
+7. Cocokkan total mutasi dokumen sistem dengan grand total rekap, bukan dengan
+   total nominal pada kumpulan kwitansi.

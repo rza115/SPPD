@@ -1,3 +1,7 @@
+Paket: Pengendalian Pagu Anggaran
+Baseline: 06d4cda (update 5), 2026-09-03
+Catatan: terverifikasi dengan `git apply --check` pada baseline ini.
+
 --- a/index.html
 +++ b/index.html
 @@ -6,6 +6,7 @@

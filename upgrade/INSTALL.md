@@ -1,5 +1,8 @@
 # Panduan Pemasangan
 
+Paket ini disiapkan dan diverifikasi terhadap aplikasi pada commit `06d4cda`
+(`update 5`) tanggal 3 September 2026.
+
 ## Prasyarat
 
 1. Pastikan perubahan aplikasi saat ini sudah dicadangkan/di-commit.
@@ -16,6 +19,10 @@ git apply --check upgrade/patches/0001-integrasi-anggaran.patch
 
 Perintah tersebut hanya memeriksa dan tidak mengubah file.
 
+Jika pemeriksaan gagal, jangan paksa pemasangan. Pastikan aplikasi berada pada
+versi yang kompatibel atau sesuaikan ulang patch terhadap perubahan yang lebih
+baru.
+
 ## Memasang
 
 ```bash
@@ -24,6 +31,20 @@ git apply upgrade/patches/0001-integrasi-anggaran.patch
 
 Patch membuat aplikasi memuat `upgrade/js/anggaran.js` dan
 `upgrade/css/anggaran.css`. File pengembangan tetap berada di folder `upgrade`.
+
+Sesudah pemasangan, jalankan pemeriksaan berikut:
+
+```bash
+node --check upgrade/js/anggaran.js
+node --check js/db.js
+node --check js/master.js
+node --check js/perjalanan.js
+node --check js/pages.js
+npm run build
+```
+
+`npm run build` membutuhkan konfigurasi environment yang dipakai oleh proyek.
+Pemeriksaan `node --check` dapat dijalankan tanpa koneksi ke Supabase.
 
 ## Pengujian minimum
 
@@ -37,6 +58,11 @@ Patch membuat aplikasi memuat `upgrade/js/anggaran.js` dan
 8. Catat realisasi luar sistem dan periksa saldo.
 9. Batalkan transaksi manual dan periksa transaksi pembalik.
 10. Coba nilai melebihi sisa dan pastikan penyimpanan ditolak.
+11. Buat perjalanan dengan peserta yang jadwalnya bertabrakan dan pastikan
+    validasi bentrok jadwal tetap bekerja.
+12. Generate kwitansi dan rekap: kwitansi harus berisi uang harian saja,
+    sedangkan mutasi pagu harus sama dengan grand total rekap (termasuk
+    transport).
 
 ## Membatalkan patch
 

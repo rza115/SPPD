@@ -70,6 +70,11 @@ realisasi masa lalu. Saat pertama kali menjadi Final, tarif uang harian efektif
 juga disalin ke `uang_harian_override`, sehingga tampilan daftar, dokumen, rekap,
 dan buku anggaran tetap menggunakan angka yang sama.
 
+Nilai `anggaran_final.nilai` dihitung memakai `calcGrandTotalFull`: uang harian
+seluruh peserta ditambah transport. Kwitansi pada baseline `update 5` hanya
+menampilkan uang harian, sehingga jumlah seluruh kwitansi tidak boleh dipakai
+sebagai pembanding mutasi apabila perjalanan memiliki biaya transport.
+
 ## 4. Identitas dan anti-duplikasi
 
 - Mutasi otomatis menggunakan `sumber = perjalanan` dan `sumber_id = pjd.id`.
