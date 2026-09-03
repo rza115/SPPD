@@ -286,6 +286,8 @@ function editPerjalanan(id) {
 
 function deletePerjalanan(id) {
   const p = getPJDList().find(x => x.id === id);
+  const budgetGuard = Anggaran.canDeletePerjalanan(p);
+  if (!budgetGuard.ok) return toast(budgetGuard.message, 'warning', 5000);
   if (!confirm(`Pindahkan perjalanan "${p?.nomor_surat}" ke Trash?`)) return;
   DB.moveToTrash(KEYS.perjalanan, id, p?.nomor_surat || 'Perjalanan dinas');
   renderPerjalananList();
@@ -476,13 +478,14 @@ function renderStep1(body) {
           </div>
           <div class="form-group">
             <label class="form-label">Kode Rekening SIPD</label>
-            <select class="form-control" id="f-sipd" onchange="PJD.form.kode_sipd_id=this.value">
+            <select class="form-control" id="f-sipd" onchange="PJD.form.kode_sipd_id=this.value;Anggaran.refreshSelectionHint()">
               <option value="">— Pilih atau isi manual —</option>
               ${sipds.map(s => `<option value="${s.id}" ${f.kode_sipd_id===s.id?'selected':''}>${s.nama_singkat||s.sub_kegiatan} (${s.kode})</option>`).join('')}
             </select>
             <input class="form-control" id="f-sipd-manual" style="margin-top:8px"
               value="${f.kode_sipd_manual||''}" placeholder="Atau ketik kode manual: 5.1.02.04.001.00003"
               oninput="PJD.form.kode_sipd_manual=this.value">
+            <div id="anggaran-sipd-hint">${Anggaran.selectionHint(f)}</div>
           </div>
         </div>
       </div>
@@ -1009,6 +1012,8 @@ function renderStep4(body) {
       </div>
     </div>
 
+    ${Anggaran.finalPreview(f)}
+
     <div class="flex gap-3 items-center" style="margin-top:4px">
       <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px">
         <input type="checkbox" id="f-final" ${f.status==='final'?'checked':''}
@@ -1113,9 +1118,14 @@ function savePerjalanan() {
   PJD.form.updated_at = new Date().toISOString();
 
   const idx = list.findIndex(x => x.id === id);
+  const previous = idx >= 0 ? list[idx] : null;
+  const budgetResult = Anggaran.preparePerjalananSave(previous, PJD.form);
+  if (!budgetResult.ok) return toast(budgetResult.message, 'error', 5000);
+  PJD.form = budgetResult.record;
   if (idx >= 0) list[idx] = PJD.form;
   else list.push(PJD.form);
   savePJDList(list);
+  Anggaran.commitPrepared(budgetResult);
 
   const label = PJD.form.status === 'final' ? 'final' : 'draft';
   toast(`Perjalanan dinas disimpan sebagai ${label}`, 'success');

@@ -383,13 +383,15 @@ PAGES.master = `
   <button class="tab-btn" onclick="switchTab('kecamatan',this)">🗺️ Kecamatan &amp; Transport</button>
   <button class="tab-btn" onclick="switchTab('kota-tujuan',this)">🏙️ Kota Tujuan</button>
   <button class="tab-btn" onclick="switchTab('sipd',this)">📑 Kode Rekening SIPD</button>
+  <button class="tab-btn" onclick="switchTab('anggaran',this)">💼 Anggaran &amp; Koreksi</button>
 </div>
 <div id="tab-unit-kerja" class="tab-pane active"></div>
 <div id="tab-pegawai"    class="tab-pane"></div>
 <div id="tab-tarif"      class="tab-pane"></div>
 <div id="tab-kecamatan"  class="tab-pane"></div>
 <div id="tab-kota-tujuan" class="tab-pane"></div>
-<div id="tab-sipd"       class="tab-pane"></div>`;
+<div id="tab-sipd"       class="tab-pane"></div>
+<div id="tab-anggaran"   class="tab-pane"></div>`;
 
 PAGES.perjalanan = `<div id="perjalanan-container"></div>`;
 

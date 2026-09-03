@@ -42,6 +42,7 @@ function switchTab(tabId, btnEl) {
     'kecamatan':  renderKecamatan,
     'kota-tujuan': renderKotaTujuan,
     'sipd':       renderSipd,
+    'anggaran':   () => Anggaran.renderMaster(),
   };
   if (renders[tabId]) renders[tabId]();
 }
@@ -551,7 +552,7 @@ function renderSipd() {
         <div class="table-wrap"><table>
           <thead><tr>
             <th>Kode</th><th>Sub Kegiatan</th><th>Kegiatan</th>
-            <th>Tahun</th><th>Status</th><th width="100">Aksi</th>
+            <th>Tahun</th><th>Pagu</th><th>Status</th><th width="100">Aksi</th>
           </tr></thead>
           <tbody>
             ${list.map(s => `
@@ -561,6 +562,7 @@ function renderSipd() {
                   <span class="text-muted text-sm">${s.nama_singkat||''}</span></td>
                 <td class="text-muted text-sm" style="max-width:180px">${s.kegiatan||'—'}</td>
                 <td>${s.tahun_anggaran||'—'}</td>
+                <td><strong>${formatRupiah(s.pagu_anggaran||0)}</strong></td>
                 <td>${s.is_active
                   ? '<span class="badge badge-auto">✅ Aktif</span>'
                   : '<span class="badge badge-static">⏸ Nonaktif</span>'}</td>
@@ -603,6 +605,11 @@ function sipdModal(id) {
           <option value="">— Semua Unit Kerja —</option>${ukOptions}
         </select></div>
     </div>
+    <div class="form-group"><label class="form-label">Pagu Anggaran</label>
+      <input type="number" min="0" step="1000" class="form-control" id="sipd-pagu"
+        value="${v.pagu_anggaran||''}" placeholder="100000000">
+      <div class="form-text">Pagu awal untuk kode rekening dan tahun anggaran ini.</div>
+    </div>
     <div class="form-group">
       <label style="display:flex;align-items:center;gap:10px;cursor:pointer">
         <input type="checkbox" id="sipd-aktif" ${v.is_active !== false ? 'checked' : ''} style="width:16px;height:16px">
@@ -631,10 +638,14 @@ function saveSipd(id) {
     kegiatan: g('sipd-kegiatan'), sub_kegiatan: g('sipd-sub'),
     nama_singkat: g('sipd-singkat'),
     tahun_anggaran: parseInt(g('sipd-tahun')) || new Date().getFullYear(),
+    pagu_anggaran: parseInt(g('sipd-pagu')) || 0,
     unit_kerja_id: g('sipd-uk'),
     is_active: document.getElementById('sipd-aktif')?.checked ?? true,
   };
   if (!obj.kode) return toast('Kode rekening wajib diisi', 'error');
+  const existing = id ? DB.getArr(KEYS.sipd).find(x => x.id === id) : null;
+  const budgetGuard = Anggaran.validateSipdUpdate(existing, obj);
+  if (!budgetGuard.ok) return toast(budgetGuard.message, 'error', 5000);
   const list = DB.getArr(KEYS.sipd);
   const idx = list.findIndex(x => x.id === id);
   if (idx >= 0) list[idx] = obj; else list.push(obj);
@@ -646,6 +657,8 @@ function saveSipd(id) {
 
 function deleteSipd(id) {
   const s = DB.getArr(KEYS.sipd).find(x => x.id === id);
+  const budgetGuard = Anggaran.canDeleteSipd(s);
+  if (!budgetGuard.ok) return toast(budgetGuard.message, 'warning', 5000);
   if (!confirm(`Pindahkan kode "${s?.kode}" ke Trash?`)) return;
   DB.moveToTrash(KEYS.sipd, id, s?.kode || 'Kode SIPD');
   renderSipd();

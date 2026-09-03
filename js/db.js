@@ -10,6 +10,7 @@ const KEYS = {
   kecamatan : 'sppd_kecamatan',
   kotaTujuan: 'sppd_kota_tujuan',
   sipd      : 'sppd_sipd',
+  anggaranMutasi: 'sppd_anggaran_mutasi',
   perjalanan: 'sppd_perjalanan',
   templates : 'sppd_templates',
   generated : 'sppd_generated',
