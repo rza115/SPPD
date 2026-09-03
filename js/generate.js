@@ -199,12 +199,7 @@ function buildUntukPembayaran(ps, pjd) {
   const tujuan  = buildTujuanText(pjd);
   // Kwitansi hanya memuat uang harian. Biaya transport tetap dihitung dan
   // digunakan pada rekap/alur lain, tetapi tidak ditampilkan di kwitansi.
-  let text = `Biaya Uang Harian Perjalanan Dinas ${tingkat} ke ${tujuan}`;
-  const maksud = (pjd.maksud_perjalanan || '').trim();
-  if (maksud) {
-    text += /^dalam\s+rangka/i.test(maksud) ? ' ' + maksud : ' dalam rangka ' + maksud;
-  }
-  return text;
+  return `Biaya Uang Harian Perjalanan Dinas ${tingkat} ke ${tujuan}`;
 }
 
 function emptyKwitansiSlotFields(slot) {
