@@ -346,6 +346,7 @@ const Anggaran = (() => {
             <td>${money(data.pagu)}</td><td>${money(data.used)}</td>
             <td><strong>${money(data.remaining)}</strong></td><td>${statusBadge(data)}</td>
             <td><div class="flex gap-2 anggaran-actions">
+              <button class="btn btn-secondary btn-sm" onclick="Anggaran.openPagu('${sipd.id}')">${data.pagu > 0 ? 'Edit Pagu' : 'Input Pagu'}</button>
               <button class="btn btn-primary btn-sm" onclick="Anggaran.openAdjustment('${sipd.id}','realisasi_luar')">Realisasi Luar</button>
               <button class="btn btn-secondary btn-sm" onclick="Anggaran.openAdjustment('${sipd.id}','koreksi_tambah')">Koreksi</button>
               <button class="btn btn-secondary btn-sm" onclick="Anggaran.openHistory('${sipd.id}')">Riwayat</button>
@@ -354,6 +355,44 @@ const Anggaran = (() => {
         }).join('')}</tbody>
       </table></div></div>` : '<div class="empty-state"><div class="empty-state-title">Belum ada kode rekening SIPD</div></div>'}
       <div id="anggaran-modal-host"></div>`;
+  }
+
+  function openPagu(sipdId) {
+    const sipd = sipdById(sipdId);
+    const host = document.getElementById('anggaran-modal-host');
+    if (!sipd || !host) return;
+    const data = summary(sipdId);
+    host.innerHTML = modalHTML('modal-anggaran-pagu', data.pagu > 0 ? 'Edit Pagu Anggaran' : 'Input Pagu Anggaran', `
+      <div class="alert alert-info"><strong>${escape(sipd.kode)}</strong><br>${escape(sipd.sub_kegiatan || sipd.nama_singkat || '')}</div>
+      <input type="hidden" id="agt-pagu-sipd" value="${escape(sipd.id)}">
+      <div class="form-group"><label class="form-label">Pagu Anggaran *</label>
+        <input type="text" inputmode="numeric" class="form-control" id="agt-pagu-nilai"
+          value="${data.pagu || ''}" placeholder="Contoh: 100.000.000">
+        <div class="form-text">Pagu tidak boleh lebih kecil dari penggunaan saat ini (${money(data.used)}).</div>
+      </div>
+    `, `
+      <button class="btn btn-secondary" onclick="closeModal('modal-anggaran-pagu')">Batal</button>
+      <button class="btn btn-primary" onclick="Anggaran.savePagu()">Simpan Pagu</button>
+    `, true);
+    openModal('modal-anggaran-pagu');
+  }
+
+  function savePagu() {
+    const sipdId = document.getElementById('agt-pagu-sipd')?.value || '';
+    const raw = document.getElementById('agt-pagu-nilai')?.value || '';
+    const sipds = DB.getArr(KEYS.sipd);
+    const index = sipds.findIndex((item) => String(item.id) === String(sipdId));
+    if (index < 0) return toast('Kode rekening tidak ditemukan.', 'error');
+    const pagu = number(String(raw).replace(/\D/g, ''));
+    if (pagu <= 0) return toast('Pagu harus lebih besar dari nol.', 'error');
+    const next = { ...sipds[index], pagu_anggaran: pagu };
+    const guard = validateSipdUpdate(sipds[index], next);
+    if (!guard.ok) return toast(guard.message, 'error', 5000);
+    sipds[index] = next;
+    DB.set(KEYS.sipd, sipds);
+    closeModal('modal-anggaran-pagu');
+    renderMaster();
+    toast('Pagu anggaran disimpan.', 'success');
   }
 
   function openAdjustment(sipdId, defaultType) {
@@ -554,6 +593,8 @@ const Anggaran = (() => {
     refreshSelectionHint,
     finalPreview,
     renderMaster,
+    openPagu,
+    savePagu,
     openAdjustment,
     saveAdjustment,
     openHistory,

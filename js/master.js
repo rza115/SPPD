@@ -606,7 +606,7 @@ function sipdModal(id) {
         </select></div>
     </div>
     <div class="form-group"><label class="form-label">Pagu Anggaran</label>
-      <input type="number" min="0" step="1000" class="form-control" id="sipd-pagu"
+      <input type="text" inputmode="numeric" class="form-control" id="sipd-pagu"
         value="${v.pagu_anggaran||''}" placeholder="100000000">
       <div class="form-text">Pagu awal untuk kode rekening dan tahun anggaran ini.</div>
     </div>
@@ -638,7 +638,7 @@ function saveSipd(id) {
     kegiatan: g('sipd-kegiatan'), sub_kegiatan: g('sipd-sub'),
     nama_singkat: g('sipd-singkat'),
     tahun_anggaran: parseInt(g('sipd-tahun')) || new Date().getFullYear(),
-    pagu_anggaran: parseInt(g('sipd-pagu')) || 0,
+    pagu_anggaran: parseInt(g('sipd-pagu').replace(/\D/g, ''), 10) || 0,
     unit_kerja_id: g('sipd-uk'),
     is_active: document.getElementById('sipd-aktif')?.checked ?? true,
   };
