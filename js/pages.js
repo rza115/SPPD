@@ -19,6 +19,8 @@ PAGES.dashboard = `
   <div class="stat-card red"><span class="stat-icon">👥</span><div class="stat-value" id="stat-pegawai">0</div><div class="stat-label">Data Pegawai</div></div>
 </div>
 
+<div id="dashboard-anggaran" class="mb-6"></div>
+
 <div class="grid-2">
   <div class="card">
     <div class="card-header">
@@ -450,6 +452,7 @@ function updateStats() {
   set('stat-perjalanan', DB.getArr(KEYS.perjalanan).length);
   set('stat-pegawai',    DB.getArr(KEYS.pegawai).length);
   set('stat-generated',  DB.getArr(KEYS.generated).length);
+  if (typeof Anggaran !== 'undefined') Anggaran.renderDashboard();
 }
 
 // ─── ROUTER ──────────────────────────────────────────────

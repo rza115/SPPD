@@ -318,6 +318,61 @@ const Anggaran = (() => {
     return '<span class="badge badge-static">Pagu belum diisi</span>';
   }
 
+  function renderDashboard(selectedYear) {
+    const container = document.getElementById('dashboard-anggaran');
+    if (!container) return;
+    const accounts = DB.getArr(KEYS.sipd);
+    const years = [...new Set(accounts.map((item) => number(item.tahun_anggaran)).filter(Boolean))]
+      .sort((a, b) => b - a);
+    const currentYear = number(selectedYear) || (years.includes(new Date().getFullYear())
+      ? new Date().getFullYear()
+      : years[0]);
+    const rows = accounts
+      .filter((item) => number(item.tahun_anggaran) === currentYear)
+      .map((item) => ({ item, data: summary(item.id) }));
+    const pagu = rows.reduce((total, row) => total + row.data.pagu, 0);
+    const used = rows.reduce((total, row) => total + row.data.used, 0);
+    const remaining = pagu - used;
+    const percent = pagu > 0 ? Math.max(0, Math.min(100, (used / pagu) * 100)) : 0;
+    const sorted = rows
+      .filter((row) => row.data.pagu > 0)
+      .sort((a, b) => b.data.percent - a.data.percent);
+
+    container.innerHTML = `
+      <div class="budget-dashboard-head">
+        <div><h3>Penyerapan Anggaran</h3><p>Ringkasan pagu dan realisasi berdasarkan buku mutasi</p></div>
+        ${years.length ? `<select class="form-control budget-year" onchange="Anggaran.renderDashboard(this.value)">
+          ${years.map((year) => `<option value="${year}" ${year === currentYear ? 'selected' : ''}>Tahun ${year}</option>`).join('')}
+        </select>` : ''}
+      </div>
+      ${rows.length ? `<div class="budget-dashboard-grid">
+        <div class="card budget-overview-card">
+          <div class="budget-donut" style="--budget-percent:${percent.toFixed(2)}">
+            <div><strong>${percent.toFixed(1)}%</strong><span>Terserap</span></div>
+          </div>
+          <div class="budget-totals">
+            <div><span class="budget-dot budget-dot-total"></span><span>Total Pagu</span><strong>${money(pagu)}</strong></div>
+            <div><span class="budget-dot budget-dot-used"></span><span>Terpakai</span><strong>${money(used)}</strong></div>
+            <div><span class="budget-dot budget-dot-left"></span><span>Sisa Anggaran</span><strong class="${remaining < 0 ? 'anggaran-debit' : 'anggaran-credit'}">${money(remaining)}</strong></div>
+          </div>
+        </div>
+        <div class="card budget-account-card">
+          <div class="budget-card-title"><strong>Penyerapan per Rekening</strong><span>${sorted.length} rekening berpagu</span></div>
+          <div class="budget-bars">
+            ${sorted.length ? sorted.map(({ item, data }) => {
+              const width = Math.max(0, Math.min(100, data.percent));
+              return `<div class="budget-bar-row">
+                <div class="budget-bar-label"><span title="${escape(item.sub_kegiatan || item.nama_singkat || item.kode)}">${escape(item.kode)} · ${escape(item.sub_kegiatan || item.nama_singkat || 'Tanpa nama')}</span><strong>${data.percent.toFixed(1)}%</strong></div>
+                <div class="budget-bar-track"><span class="${data.percent >= 100 ? 'danger' : data.percent >= 90 ? 'warning' : ''}" style="width:${width}%"></span></div>
+                <div class="budget-bar-values">Terpakai ${money(data.used)} · Sisa ${money(data.remaining)}</div>
+              </div>`;
+            }).join('') : '<div class="empty-state budget-empty">Belum ada rekening dengan pagu.</div>'}
+          </div>
+        </div>
+      </div>` : `<div class="card"><div class="empty-state budget-empty">Belum ada data anggaran untuk tahun yang dipilih.</div></div>`}
+    `;
+  }
+
   function renderMaster() {
     const container = document.getElementById('tab-anggaran');
     if (!container) return;
@@ -592,6 +647,7 @@ const Anggaran = (() => {
     selectionHint,
     refreshSelectionHint,
     finalPreview,
+    renderDashboard,
     renderMaster,
     openPagu,
     savePagu,
