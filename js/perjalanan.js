@@ -707,6 +707,12 @@ function togglePeserta(pegawaiId) {
     document.getElementById('ptotal-' + pegawaiId).textContent = '';
   } else {
     // Add
+    const conflicts = findParticipantScheduleConflicts(PJD.form, [pegawaiId]);
+    if (conflicts.length > 0) {
+      if (chk) chk.checked = false;
+      toast(formatParticipantConflictMessage(conflicts[0]), 'error', 7000);
+      return;
+    }
     const suggestTransport = getSuggestTransport();
     PJD.form.peserta.push({
       pegawai_id: pegawaiId,
@@ -1032,6 +1038,44 @@ function wizardPrev() {
 }
 
 // ─── VALIDATION ───────────────────────────────────────────
+function findParticipantScheduleConflicts(form, participantIds = null) {
+  if (!form?.tanggal_berangkat || !form?.tanggal_kembali) return [];
+
+  const selectedIds = new Set(
+    participantIds || (form.peserta || []).map(p => p.pegawai_id)
+  );
+  const currentId = PJD.editId || form.id || null;
+  const start = form.tanggal_berangkat;
+  const end = form.tanggal_kembali;
+  const conflicts = [];
+
+  getPJDList().forEach(perjalanan => {
+    if (perjalanan.id === currentId) return;
+    if (!perjalanan.tanggal_berangkat || !perjalanan.tanggal_kembali) return;
+
+    const overlaps = start <= perjalanan.tanggal_kembali
+      && end >= perjalanan.tanggal_berangkat;
+    if (!overlaps) return;
+
+    (perjalanan.peserta || []).forEach(peserta => {
+      if (selectedIds.has(peserta.pegawai_id)) {
+        conflicts.push({ pegawaiId: peserta.pegawai_id, perjalanan });
+      }
+    });
+  });
+
+  return conflicts;
+}
+
+function formatParticipantConflictMessage(conflict) {
+  const pegawai = getPegawaiById(conflict.pegawaiId);
+  const perjalanan = conflict.perjalanan;
+  const rentang = perjalanan.tanggal_berangkat === perjalanan.tanggal_kembali
+    ? formatTanggal(perjalanan.tanggal_berangkat)
+    : `${formatTanggal(perjalanan.tanggal_berangkat)} s.d. ${formatTanggal(perjalanan.tanggal_kembali)}`;
+  return `${pegawai?.nama_lengkap || 'Peserta'} sudah terdaftar pada perjalanan ${perjalanan.nomor_surat || 'lain'} tanggal ${rentang}`;
+}
+
 function validateStep(n) {
   const f = PJD.form;
   if (n === 1) {
@@ -1049,12 +1093,20 @@ function validateStep(n) {
   if (n === 2) {
     if (f.peserta.length === 0)
       return toast('Pilih minimal satu peserta', 'error'), false;
+    const conflicts = findParticipantScheduleConflicts(f);
+    if (conflicts.length > 0)
+      return toast(formatParticipantConflictMessage(conflicts[0]), 'error', 7000), false;
   }
   return true;
 }
 
 // ─── SAVE ─────────────────────────────────────────────────
 function savePerjalanan() {
+  const conflicts = findParticipantScheduleConflicts(PJD.form);
+  if (conflicts.length > 0) {
+    toast(formatParticipantConflictMessage(conflicts[0]), 'error', 7000);
+    return;
+  }
   const list = getPJDList();
   const id   = PJD.editId || ('pjd_' + Date.now());
   PJD.form.id = id;
