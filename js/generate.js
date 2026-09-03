@@ -156,7 +156,7 @@ function buildBaseArgs(pjd) {
     kegiatan           : sipd?.kegiatan || '',
     sub_kegiatan       : sipd?.sub_kegiatan || '',
     nama_singkat_sipd  : sipd?.nama_singkat || '',
-    tujuan_perjalanan  : [pjd.deskripsi_tugas, formatHariTanggalTugas(pjd.tanggal_berangkat, pjd.tanggal_kembali), tujuan ? 'di ' + tujuan : ''].filter(Boolean).join(', pada '),
+    tujuan_perjalanan  : tujuan,
 
     // ── PPTK ────────────────────────────────────────────
     nama_pptk          : pptk?.nama_lengkap || '',

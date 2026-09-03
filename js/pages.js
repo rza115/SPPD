@@ -152,7 +152,7 @@ PAGES.panduan = `
   ['kegiatan','🔄 Auto','auto','Nama kegiatan dari kode rekening SIPD','Perencanaan, Penganggaran dan Evaluasi Kinerja Perangkat Daerah'],
   ['sub_kegiatan','🔄 Auto','auto','Nama sub kegiatan dari kode rekening SIPD','Evaluasi Kinerja Perangkat Daerah'],
   ['nomor_sppd','🔄 Auto','auto','Nomor SPPD (sama dengan {{nomor}})','800.1.11.1/1338-Sekretariat'],
-  ['tujuan_perjalanan','⚡ Computed','computed','Deskripsi tujuan lengkap untuk rekap<br><span class="text-muted text-sm">Gabungan: deskripsi_tugas + hari_tanggal + alamat tujuan</span>','Koordinasi Terkait... pada hari Selasa, 30 Desember 2025, di Jl. Medan Merdeka Barat...'],
+  ['tujuan_perjalanan','⚡ Computed','computed','Nama tempat tujuan untuk rekap','BPKAD'],
   ['tanggal_rekap','🔄 Auto','auto','Tanggal rekap belanja (sama dengan tanggal_berangkat)','30 Desember 2025'],
   ['kota_tanggal_rekap','⚡ Computed','computed','Baris kota dan tanggal di TTD rekap belanja','Cibinong, 30 Desember 2025'],
 ]) + argSection('📄','#E8F5E9','Kwitansi Per Halaman (1–3 peserta)','Argument untuk template kwitansi dengan layout 1 lembar = 1–3 peserta. Gunakan suffix _1, _2, _3 untuk masing-masing kwitansi di halaman yang sama.',
