@@ -196,7 +196,12 @@ function chunkArray(arr, size) {
 
 function buildUntukPembayaran(ps, pjd) {
   const tingkat = getTingkatBiaya(pjd.jenis_perjalanan);
-  const tujuan  = buildTujuanText(pjd);
+  const kecamatan = pjd.jenis_perjalanan === 'dalam_kota'
+    ? getKecById(pjd.kecamatan_id)
+    : null;
+  const tujuan = kecamatan
+    ? `Kecamatan ${kecamatan.nama}`
+    : buildTujuanText(pjd);
   // Kwitansi hanya memuat uang harian. Biaya transport tetap dihitung dan
   // digunakan pada rekap/alur lain, tetapi tidak ditampilkan di kwitansi.
   return `Biaya Uang Harian Perjalanan Dinas ${tingkat} ke ${tujuan}`;
