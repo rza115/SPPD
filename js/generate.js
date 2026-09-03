@@ -197,9 +197,9 @@ function chunkArray(arr, size) {
 function buildUntukPembayaran(ps, pjd) {
   const tingkat = getTingkatBiaya(pjd.jenis_perjalanan);
   const tujuan  = buildTujuanText(pjd);
-  let text = ps.dapat_transport
-    ? `Biaya Uang Harian dan Transport Perjalanan Dinas ${tingkat} ke ${tujuan}`
-    : `Biaya Uang Harian Perjalanan Dinas ${tingkat} ke ${tujuan}`;
+  // Kwitansi hanya memuat uang harian. Biaya transport tetap dihitung dan
+  // digunakan pada rekap/alur lain, tetapi tidak ditampilkan di kwitansi.
+  let text = `Biaya Uang Harian Perjalanan Dinas ${tingkat} ke ${tujuan}`;
   const maksud = (pjd.maksud_perjalanan || '').trim();
   if (maksud) {
     text += /^dalam\s+rangka/i.test(maksud) ? ' ' + maksud : ' dalam rangka ' + maksud;
@@ -226,6 +226,7 @@ function buildKwitansiSlotFields(ps, pjd, urutanGlobal, slot) {
 
   const pgw = getPegawaiById(ps.pegawai_id);
   const cp  = calcPesertaFull(ps, pjd);
+  const totalKwitansi = cp.totalH;
   const pg  = pgw?.pangkat_golongan || [pgw?.pangkat, pgw?.golongan].filter(Boolean).join(' / ') || '';
 
   return {
@@ -241,16 +242,16 @@ function buildKwitansiSlotFields(ps, pjd, urutanGlobal, slot) {
     [`rekening_${slot}`]              : pgw?.nomor_rekening || '',
     [`uang_harian_${slot}`]           : formatRupiah(cp.harian),
     [`uang_harian_peserta_${slot}`]   : formatRupiah(cp.harian),
-    [`transport_${slot}`]             : formatRupiah(cp.totalT),
-    [`transport_peserta_${slot}`]     : formatRupiah(cp.totalT),
-    [`transport_total_${slot}`]       : formatRupiah(cp.totalT),
-    [`total_${slot}`]                 : formatRupiah(cp.total),
-    [`total_peserta_${slot}`]         : formatRupiah(cp.total),
-    [`total_terbilang_${slot}`]       : terbilang(cp.total),
-    [`total_peserta_terbilang_${slot}`]: terbilang(cp.total),
-    [`banyaknya_uang_${slot}`]        : terbilang(cp.total),
-    [`nominal_${slot}`]               : formatNominalDoc(cp.total),
-    [`nominal_peserta_${slot}`]       : formatNominalDoc(cp.total),
+    [`transport_${slot}`]             : '',
+    [`transport_peserta_${slot}`]     : '',
+    [`transport_total_${slot}`]       : '',
+    [`total_${slot}`]                 : formatRupiah(totalKwitansi),
+    [`total_peserta_${slot}`]         : formatRupiah(totalKwitansi),
+    [`total_terbilang_${slot}`]       : terbilang(totalKwitansi),
+    [`total_peserta_terbilang_${slot}`]: terbilang(totalKwitansi),
+    [`banyaknya_uang_${slot}`]        : terbilang(totalKwitansi),
+    [`nominal_${slot}`]               : formatNominalDoc(totalKwitansi),
+    [`nominal_peserta_${slot}`]       : formatNominalDoc(totalKwitansi),
     [`untuk_pembayaran_${slot}`]      : buildUntukPembayaran(ps, pjd),
     [`urutan_peserta_${slot}`]        : urutanGlobal,
     [`ada_peserta_${slot}`]           : true,
@@ -292,6 +293,7 @@ function buildPesertaArgs(ps, pjd, urutan) {
   const pgw  = getPegawaiById(ps.pegawai_id);
   const uk   = getUKForPegawai(pgw);
   const cp   = calcPesertaFull(ps, pjd);
+  const totalKwitansi = cp.totalH;
 
   const untukPembayaran = buildUntukPembayaran(ps, pjd);
 
@@ -315,20 +317,20 @@ function buildPesertaArgs(ps, pjd, urutan) {
     // Kalkulasi
     uang_harian          : formatRupiah(cp.harian),
     uang_harian_peserta  : formatRupiah(cp.harian),
-    transport            : formatRupiah(cp.totalT),
-    transport_peserta    : formatRupiah(cp.totalT),
-    total                : formatRupiah(cp.total),
-    total_peserta        : formatRupiah(cp.total),
-    total_terbilang      : terbilang(cp.total),
-    total_peserta_terbilang: terbilang(cp.total),
-    banyaknya_uang       : terbilang(cp.total),
-    nominal              : formatNominalDoc(cp.total),
-    nominal_peserta      : formatNominalDoc(cp.total),
+    transport            : '',
+    transport_peserta    : '',
+    total                : formatRupiah(totalKwitansi),
+    total_peserta        : formatRupiah(totalKwitansi),
+    total_terbilang      : terbilang(totalKwitansi),
+    total_peserta_terbilang: terbilang(totalKwitansi),
+    banyaknya_uang       : terbilang(totalKwitansi),
+    nominal              : formatNominalDoc(totalKwitansi),
+    nominal_peserta      : formatNominalDoc(totalKwitansi),
     untuk_pembayaran     : untukPembayaran,
     urutan_peserta       : urutan,
-    // Transport detail
-    transport_nominal    : ps.dapat_transport ? formatRupiah(parseInt(ps.nominal_transport)||0) : '',
-    transport_kali       : ps.dapat_transport ? (parseInt(ps.jumlah_kali)||1) : '',
+    // Detail transport sengaja dikosongkan khusus pada data kwitansi.
+    transport_nominal    : '',
+    transport_kali       : '',
     lama_hari            : cp.lama,
   };
 }
