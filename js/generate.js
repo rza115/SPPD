@@ -56,6 +56,13 @@ function buildBaseArgs(pjd) {
   const tingkat= getTingkatBiaya(pjd.jenis_perjalanan);
   const grand  = calcGrandTotalFull(pjd);
   const kodeRek= sipd ? sipd.kode : (pjd.kode_sipd_manual || '');
+  const maksud = (pjd.maksud_perjalanan || '').trim();
+  const dalamRangka = maksud && /^dalam\s+rangka\b/i.test(maksud)
+    ? maksud
+    : (maksud ? `Dalam rangka ${maksud}` : '');
+  const tujuanPerjalanan = dalamRangka
+    ? `${dalamRangka} ke ${tujuan}`
+    : tujuan;
 
   // Jam mulai/selesai — opsional, dipakai template di baris "Pukul :".
   const jamMulai   = formatJam(pjd.jam_mulai);
@@ -156,7 +163,7 @@ function buildBaseArgs(pjd) {
     kegiatan           : sipd?.kegiatan || '',
     sub_kegiatan       : sipd?.sub_kegiatan || '',
     nama_singkat_sipd  : sipd?.nama_singkat || '',
-    tujuan_perjalanan  : tujuan,
+    tujuan_perjalanan  : tujuanPerjalanan,
 
     // ── PPTK ────────────────────────────────────────────
     nama_pptk          : pptk?.nama_lengkap || '',
